@@ -1,7 +1,7 @@
 const {expect} = require("chai");
 const { deployContractUpgradeable, deployContract, number} = require("./helpers");
 
-describe("Integration test", function () {
+describe("GenesisToken", function () {
   let myToken;
   let bodyPartToken;
   let factory;
@@ -12,12 +12,20 @@ describe("Integration test", function () {
     [owner, holder1, holder2, holder3] = await ethers.getSigners();
   });
 
+  async function initAndDeploy() {
+    // genesisParts = await deployUtils.deployProxy("GenesisParts");
+
+  };
 
   beforeEach(async function () {
-  });
-
-  it("should do something", async function () {
-    
+    await initAndDeploy();
   });
   
+  describe("listMintedAvatars", ()=> {
+    it("should let gamer list all its minted Avatars", async function () {
+
+    });
+  
+  })
+
 });
