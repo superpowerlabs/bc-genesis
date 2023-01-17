@@ -18,4 +18,12 @@ contract BurnerMock {
   ) public {
     part.burn(account, id, amount);
   }
+
+  function burnBatch(
+    address account,
+    uint256[] memory ids,
+    uint256[] memory amounts
+  ) public {
+    part.burnBatch(account, ids, amounts);
+  }
 }

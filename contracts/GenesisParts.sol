@@ -6,6 +6,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
+/// @title ERC1155 token that represents body parts for a Bot in ByteCity
+/// @author Yacin Bahi <yacin@superpower.io>
+/// @notice Explain to an end user what this does
+/// @dev Explain to a developer any extra details
 contract GenesisParts is ERC1155, Ownable {
   uint public constant PARTS_NUMBER = 4; // 4 body parts: head, larm, rarm, legs 
   uint public constant PARTS_NUMBER_TOT = 10; // is 1+2+3+4=10 for 4 body parts: head, larm, rarm, legs 
@@ -36,6 +40,7 @@ contract GenesisParts is ERC1155, Ownable {
   /// @param account address of the token owner
   /// @param id token id to mint
   /// @param amount how many token of that id to mint
+  /// @return list of id just minted
   function mint(address account, uint id, uint256 amount) onlyOwner
     public payable returns (uint)
   {
@@ -44,14 +49,38 @@ contract GenesisParts is ERC1155, Ownable {
     return id;
   }
 
+  /// @notice Mints a batch of token by Ids
+  /// @dev Explain to a developer any extra details
+  /// @param account address of the token owner
+  /// @param ids tokens id to mint
+  /// @param amounts amounts of token to mint for each token
+  /// @return list of idx just minted
+  function mintBatch(address account, uint[] memory ids, uint256[] memory amounts) onlyOwner
+    public payable returns (uint[] memory)
+  {
+    // require(msg.value == mintFee);
+    _mintBatch(account, ids, amounts, "");
+    return ids;
+  }
+
   /// @notice Lets contract's authorized burner to burn tokens
   /// @dev Explain to a developer any extra details
   /// @param account address of the token owner
-  /// @param id token id to mint
-  /// @param amount how many token of that id to mint
+  /// @param id token id to burn
+  /// @param amount how many token of that id to burn
   function burn(address account, uint id, uint256 amount) public {
     require(_burner == _msgSender(), "Not authorised to burn");
     _burn(account, id, amount);
+  }
+
+  /// @notice Lets contract's authorized burner to burn a set of tokens
+  /// @dev Explain to a developer any extra details
+  /// @param account address of the token owner
+  /// @param ids token ids to burn
+  /// @param amounts amount of token to burn each
+  function burnBatch(address account, uint[] memory ids, uint256[] memory amounts) public {
+    require(_burner == _msgSender(), "Not authorised to burn");
+    _burnBatch(account, ids, amounts);
   }
 
   /// @notice Determines if set of variants is consistent to mint a GenesisToken

@@ -1,5 +1,4 @@
-const {expect, assert} = require("chai");
-const { deployContractUpgradeable, deployContract, number} = require("./helpers");
+const {expect} = require("chai");
 
 describe("GenesisParts", function () {
   let genesisParts;
@@ -17,8 +16,10 @@ describe("GenesisParts", function () {
   async function initAndDeploy() {
     genesisParts = await GenesisParts.deploy();
     await(genesisParts).deployed();
+
     genesisFactory = await GenesisFactory.deploy();
     await(genesisFactory).deployed();
+
     burner = await BurnerMock.deploy();
     await burner.deployed();
     await burner.setGenesisParts(genesisParts.address);
@@ -38,7 +39,7 @@ describe("GenesisParts", function () {
 
   });
   
-  describe("setBurner", ()=> {
+  describe("setBurner and burn", ()=> {
 
     it("should burn the token if Burner", async function () {
       const tokenId = 1001;
@@ -49,6 +50,25 @@ describe("GenesisParts", function () {
       await burner.burn(holder1.address, tokenId, burnAmount);
       let balance1 = await genesisParts.balanceOf(holder1.address, tokenId)
       expect(balance1).to.equal(balance0.sub(burnAmount));
+    });
+
+    // TODO: test unhappy path
+    // it("should fail burn the token if Burner", async function () {
+    // });
+  });
+
+  describe("setBurner and burnBatch", ()=> {
+
+    it("should burn the token if Burner", async function () {
+      const tokenIds = [1001, 1002, 1003, 1004];
+      const mintAmounts = [10,10,10,10];
+      const burnAmounts = [1,1,1,1];
+      await genesisParts.mintBatch(holder1.address, tokenIds, mintAmounts);
+      let balance0 = await genesisParts.balanceOf(holder1.address, tokenIds[0])
+      await genesisParts.setBurner(burner.address);
+      await burner.burnBatch(holder1.address, tokenIds, burnAmounts);
+      let balance1 = await genesisParts.balanceOf(holder1.address, tokenIds[0])
+      expect(balance1).to.equal(balance0.sub(burnAmounts[0]));
     });
 
     // TODO: test unhappy path
