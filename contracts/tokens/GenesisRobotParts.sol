@@ -10,7 +10,6 @@ contract GenesisRobotParts is ERC1155 {
   }
 
   mapping(uint256 => Part) public parts;
-  mapping(address => mapping(uint256 => bool)) public ownerOf;
   uint256 private _counter = 0;
 
   function mint(address _owner, string memory _bodyPart, string memory _color) public {
