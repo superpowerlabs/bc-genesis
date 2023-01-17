@@ -10,6 +10,8 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./soliutils/UUPSUpgradableTemplate.sol";
 import "./BodyParts.sol";
 import "./GenesisRobot.sol";
+import "./utils/Constants.sol";
+
 
 
 contract RobotFactory is UUPSUpgradableTemplate {
@@ -58,11 +60,10 @@ contract RobotFactory is UUPSUpgradableTemplate {
   /// @notice Create a Robot Genesis NFT
   /// @dev Given a payment token, will use the normal price or the discounted price if whitelisted
   /// @param bodypartID the Body part to be Veried of ownership
-  /// @param bodypartAmount Amount of body part in sequence to be verified
   function createRobot(
-    uint256 bodypartID,
-    uint8 bodypartAmount
-  ) external payable {
+    uint256 bodypartID
+  ) external {
+    uint8 bodypartAmount = Constants.robotAmount[bodypartID];
     for (uint8 i = 0; i <= bodypartAmount; i++) {
         if (_bp.balanceOf(_msgSender(), bodypartID + i) < 1) revert MissingBodyPart();
     }
