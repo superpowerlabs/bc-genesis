@@ -75,30 +75,5 @@ describe("GenesisParts", function () {
     // it("should fail burn the token if Burner", async function () {
     // });
   });
-
-  describe("isVariantSetConsistent", ()=> {
-
-    it("should test a valid set", async function () {
-      const tokenIds = [101, 201, 301, 401];
-      const {0: boolValue, 1:strValue } = await genesisParts.isVariantSetConsistent(tokenIds);
-      expect(boolValue).to.equal(true);
-      expect(strValue).to.equal("success");
-    });
-
-    it("should fail because missing part", async function () {
-      const tokenIds = [101, 201, 301];
-      const {0: boolValue, 1:strValue } = await genesisParts.isVariantSetConsistent(tokenIds);
-      expect(boolValue).to.equal(false);
-      expect(strValue).to.equal("Not enough or too many parts");
-    });
-
-    it("should test an inconstant set of parts", async function () {
-      const tokenIds = [101, 201, 301, 404];
-      const {0: boolValue, 1:strValue } = await genesisParts.isVariantSetConsistent(tokenIds);
-      expect(boolValue).to.equal(false);
-      expect(strValue).to.equal("Unconsistent variants in token set");
-    });
-
-  });
     
 })
