@@ -12,9 +12,7 @@ import "./BodyParts.sol";
 import "./GenesisRobot.sol";
 import "./utils/Constants.sol";
 
-
-
-contract RobotFactory is UUPSUpgradableTemplate {
+contract RobotFactory is UUPSUpgradableTemplate, Constants {
   using AddressUpgradeable for address;
   using SafeMathUpgradeable for uint256;
 
