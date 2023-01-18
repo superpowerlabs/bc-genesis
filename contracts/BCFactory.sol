@@ -12,9 +12,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
-import "./BCGenesisToken.sol";
-import "./BCOracleToken.sol";
-import "./Signable.sol";
+import "./tokens/BCGenesisToken.sol";
+import "./tokens/BCOracleToken.sol";
+import "./utils/Signable.sol";
 
 //import "hardhat/console.sol";
 

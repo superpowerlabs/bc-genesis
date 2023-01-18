@@ -5,10 +5,10 @@ pragma solidity 0.8.17;
 // Authors: Francesco Sullo <francesco@superpower.io>
 // (c) Superpower Labs Inc.
 
-import "./SuperpowerNFTBase.sol";
-import "./interfaces/ISuperpowerNFT.sol";
+import "./BCNFTBase.sol";
+import "../interfaces/IBCNFT.sol";
 
-abstract contract SuperpowerNFT is ISuperpowerNFT, SuperpowerNFTBase {
+abstract contract BCNFT is IBCNFT, BCNFTBase {
   error Forbidden();
   error CannotMint();
   error ZeroAddress();

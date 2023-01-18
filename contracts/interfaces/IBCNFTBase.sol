@@ -5,7 +5,7 @@ pragma solidity 0.8.17;
 
 import "./ILockable.sol";
 
-interface ISuperpowerNFTBase is ILockable {
+interface IBCNFTBase is ILockable {
   event TokenURIFrozen();
   event TokenURIUpdated(string uri);
 

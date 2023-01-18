@@ -9,12 +9,13 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721RoyaltyUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "./interfaces/ISuperpowerNFTBase.sol";
+import "../interfaces/IBCNFTBase.sol";
 
 /*
 About ownership and upgradeability
@@ -37,10 +38,11 @@ did not have to wait for the fixed lockup time before intervening.
 
 */
 
-contract SuperpowerNFTBase is
-  ISuperpowerNFTBase,
+contract BCNFTBase is
+  IBCNFTBase,
   Initializable,
   ERC721Upgradeable,
+  ERC721RoyaltyUpgradeable,
   ERC721EnumerableUpgradeable,
   OwnableUpgradeable,
   UUPSUpgradeable
@@ -85,7 +87,7 @@ contract SuperpowerNFTBase is
   }
 
   // solhint-disable-next-line
-  function __SuperpowerNFTBase_init(
+  function __BCNFTBase_init(
     string memory name,
     string memory symbol,
     string memory tokenUri
@@ -115,7 +117,7 @@ contract SuperpowerNFTBase is
   function supportsInterface(bytes4 interfaceId)
     public
     view
-    override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+    override(ERC721Upgradeable, ERC721RoyaltyUpgradeable, ERC721EnumerableUpgradeable)
     returns (bool)
   {
     return interfaceId == type(ILockable).interfaceId || super.supportsInterface(interfaceId);
@@ -257,6 +259,11 @@ contract SuperpowerNFTBase is
       return false;
     }
     return super.isApprovedForAll(owner, operator);
+  }
+
+  function _burn(uint256 tokenId) internal override (ERC721Upgradeable, ERC721RoyaltyUpgradeable) {
+    super._burn(tokenId);
+    _resetTokenRoyalty(tokenId);
   }
 
   uint256[50] private __gap;

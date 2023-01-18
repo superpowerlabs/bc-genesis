@@ -4,11 +4,11 @@ pragma solidity 0.8.17;
 // Authors: Francesco Sullo <francesco@superpower.io>
 // (c) Superpower Labs Inc.
 
-import "./SuperpowerNFT.sol";
+import "./BCNFT.sol";
 
-contract BCGenesisToken is SuperpowerNFT {
+contract BCGenesisToken is BCNFT {
   function initialize(string memory tokenUri) public initializer {
-    __SuperpowerNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
+    __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
   }
 
   function burnBatch(uint256[] calldata tokenIds) external onlyFactory {

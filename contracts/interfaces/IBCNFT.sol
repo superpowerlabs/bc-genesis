@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 // Authors: Francesco Sullo <francesco@superpower.io>
 // (c) Superpower Labs Inc
 
-interface ISuperpowerNFT {
+interface IBCNFT {
   function setMaxSupply(uint256 maxSupply_) external;
 
   function setFactory(address factory_, bool enabled) external;
