@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.17;
+
+// Author : Francesco Sullo < francesco@superpower.io>
+// (c) Superpower Labs Inc.
+
+
+import "../tokens/BCGenesisToken.sol";
+import "../tokens/BCOracleToken.sol";
+
+//import "hardhat/console.sol";
+
+contract MockFactory {
+  BCGenesisToken public genesisToken;
+  BCOracleToken public oracleToken;
+
+  function initialize(address genesis_, address oracle_) public {
+    genesisToken = BCGenesisToken(genesis_);
+    oracleToken = BCOracleToken(oracle_);
+  }
+
+  function mintGenesis(address to) public {
+    genesisToken.mint(to);
+  }
+
+  function mintOracle(address to) public {
+    oracleToken.mint(to);
+  }
+
+   function burnBatch(uint256[] calldata tokenIds) public {
+    genesisToken.burnBatch(tokenIds);
+  }
+
+}
