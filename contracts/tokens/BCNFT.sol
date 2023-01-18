@@ -20,6 +20,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   using AddressUpgradeable for address;
   uint256 private _nextTokenId;
   uint256 private _maxSupply;
+  uint private _blockNumberOnStart;
   bool private _mintEnded;
 
   address[] public factories;
@@ -35,6 +36,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
 
   function setMaxSupply(uint256 maxSupply_) external onlyOwner {
     if (_nextTokenId == 0) {
+      _blockNumberOnStart = block.number;
       _nextTokenId = 1;
     }
     if (_nextTokenId > maxSupply_) revert InvalidSupply();
@@ -79,7 +81,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function mint(address to) external virtual override onlyFactory {
-    if (_nextTokenId == 0 || _nextTokenId > _maxSupply) revert CannotMint();
+    if (_nextTokenId == 0 || _nextTokenId > maxSupply()) revert CannotMint();
     _safeMint(to, _nextTokenId++);
   }
 
@@ -93,7 +95,11 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function maxSupply() external view override returns (uint256) {
-    return _maxSupply;
+    if(_mintEnded)
+    {return _maxSupply;}
+    
+    //TODO: Define Proper Decay Factor
+    return _maxSupply - ((block.number - _blockNumberOnStart)/100);
   }
 
   function nextTokenId() external view override returns (uint256) {
