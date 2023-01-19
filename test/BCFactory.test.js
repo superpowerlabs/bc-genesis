@@ -96,18 +96,23 @@ describe("BCFactory", function () {
       const hash = await factory.hashGenesis(holder1.address, rand);
       const sign = await getSignature(hash, validator0PK);
       await genesis.setFactory(factory.address, true);
-      for (let x = 0; x < 4; x++) {
+      for (let x = 0; x < 8; x++) {
         await factory.connect(holder1).mintGenesis(rand, sign);
       }
-      expect(await genesis.balanceOf(holder1.address)).equal(4);
+      expect(await genesis.balanceOf(holder1.address)).equal(8);
       const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
       const sign1 = await getSignature(hash1, validator0PK);
+      const hash2 = await factory.hashOracle(holder1.address, 5, 6, 7, 8, rand);
+      const sign2 = await getSignature(hash2, validator0PK);
       await oracle.setFactory(factory.address, true);
       const orac = await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
       expect(orac.hash).to.exist;
       //check if the parts are burned
-      expect(await genesis.balanceOf(holder1.address)).equal(0);
+      expect(await genesis.balanceOf(holder1.address)).equal(4);
       expect(await oracle.balanceOf(holder1.address)).equal(1);
+      //check if signature already used
+      expect(await factory.isSignatureUsed(sign1)).equal(true);
+      expect(await factory.isSignatureUsed(sign2)).equal(false);
     });
     it("should fail to mint if not signed", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
