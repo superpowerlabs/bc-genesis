@@ -82,12 +82,15 @@ describe("BCFactory", function () {
     });
   });
 
-  describe("mintOracle", function () {
+  describe("hashOracle", function () {
     it("should successfully hash oracle", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
       const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
       expect(hash1).to.be.a("string");
     });
+  });
+
+  describe("mintOracle", function () {
     it("should mint oracle", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
       const hash = await factory.hashGenesis(holder1.address, rand);
@@ -102,6 +105,9 @@ describe("BCFactory", function () {
       await oracle.setFactory(factory.address, true);
       const orac = await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
       expect(orac.hash).to.exist;
+      //check if the parts are burned
+      expect(await genesis.balanceOf(holder1.address)).equal(0);
+      expect(await oracle.balanceOf(holder1.address)).equal(1);
     });
     it("should fail to mint if not signed", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
