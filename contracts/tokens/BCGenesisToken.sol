@@ -7,6 +7,7 @@ pragma solidity 0.8.17;
 import "./BCNFT.sol";
 
 contract BCGenesisToken is BCNFT {
+
   function initialize(string memory tokenUri) public initializer {
     __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
   }
