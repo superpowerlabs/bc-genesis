@@ -107,7 +107,7 @@ describe("BCFactory", function () {
       const sign2 = await getSignature(hash2, validator0PK);
       await oracle.setFactory(factory.address, true);
       const orac = await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
-      await expect(orca).to.emit(factory, "BodyParts").withArgs(1, 2, 3, 4);
+      await expect(orac).to.emit(factory, "OracleMinted").withArgs(1, 1, 2, 3, 4);
       expect(orac.hash).to.exist;
       //check if the parts are burned
       expect(await genesis.balanceOf(holder1.address)).equal(4);
