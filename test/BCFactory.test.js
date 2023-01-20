@@ -73,6 +73,7 @@ describe("BCFactory", function () {
       const part = await factory.connect(holder1).mintGenesis(rand, sign);
       expect(part.hash).to.exist;
     });
+
     it("should fail to mint if not signed", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
       const hash = await factory.hashGenesis(holder2.address, rand);
@@ -114,6 +115,23 @@ describe("BCFactory", function () {
       expect(await factory.isSignatureUsed(sign1)).equal(true);
       expect(await factory.isSignatureUsed(sign2)).equal(false);
     });
+
+    it("should listen to event emitted when mint", async function () {
+      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
+      const hash = await factory.hashGenesis(holder1.address, rand);
+      const sign = await getSignature(hash, validator0PK);
+      await genesis.setFactory(factory.address, true);
+      for (let x = 0; x < 8; x++) {
+        await factory.connect(holder1).mintGenesis(rand, sign);
+      }
+      expect(await genesis.balanceOf(holder1.address)).equal(8);
+      const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
+      const sign1 = await getSignature(hash1, validator0PK);
+      await oracle.setFactory(factory.address, true);
+      const orca = await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
+      await expect(orca).to.emit(factory, "BodyParts").withArgs(1, 2, 3, 4);
+    });
+
     it("should fail to mint if not signed", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
       const hash = await factory.hashGenesis(holder1.address, rand);
@@ -128,6 +146,7 @@ describe("BCFactory", function () {
       await oracle.setFactory(factory.address, true);
       await expect(factory.connect(holder2).mintOracle(1, 2, 3, 4, rand, sign1)).revertedWith("InvalidSignature()");
     });
+
     it("should revert trying to use already used parts", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
       const hash = await factory.hashGenesis(holder1.address, rand);
@@ -143,6 +162,7 @@ describe("BCFactory", function () {
       await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
       await expect(factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1)).revertedWith("ERC721: invalid token ID");
     });
+
     it("should revert if not owner of parts", async function () {
       const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
       const hash = await factory.hashGenesis(holder1.address, rand);

@@ -32,6 +32,8 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
 
   mapping(bytes32 => bool) private _usedSignatures;
 
+  event BodyParts(uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
+
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
     __UUPSUpgradeable_init();
@@ -70,6 +72,7 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     ) revert NotGenesisOwner();
     _saveSignatureAsUsed(signature);
     oracleToken.mint(_msgSender());
+    emit BodyParts(partId1, partId2, partId3, partId4);
     uint256[] memory parts = new uint256[](4);
     parts[0] = partId1;
     parts[1] = partId2;
