@@ -34,7 +34,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
 
   function _setParameters(uint256 maxSupply_, uint256 blockNumberOnStart_, bool activateDecay) internal {
     if (_initialMaxSupply > 0) revert ParametersAlreadySetUp();
-    if (blockNumberOnStart_ < block.number + 1 hours) revert InvalidStart();
+    if (blockNumberOnStart_ < block.number) revert InvalidStart();
     _blockNumberOnStart = blockNumberOnStart_;
     _nextTokenId = 1;
     _initialMaxSupply = maxSupply_;

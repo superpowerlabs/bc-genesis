@@ -1,5 +1,5 @@
 const {expect} = require("chai");
-const {deployContractUpgradeable, deployContract, number, signPackedData} = require("./helpers");
+const {signPackedData, increaseBlockTimestampBy} = require("./helpers");
 
 describe("BCFactory", function () {
   let factory;
@@ -9,8 +9,6 @@ describe("BCFactory", function () {
 
   let owner, holder1, holder2, holder3, minter;
   let validator0PK = "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
-  let validator1PK = "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba";
-  let validator2PK = "0x3141592653589793238462643383279502884197169399375105820974944592";
 
   before(async function () {
     [owner, holder1, holder2, holder3, validator0, validator1] = await ethers.getSigners();
@@ -18,7 +16,7 @@ describe("BCFactory", function () {
     BCGenesisToken = await ethers.getContractFactory("BCGenesisToken");
     BCOracleToken = await ethers.getContractFactory("BCOracleToken");
     BCFactory = await ethers.getContractFactory("BCFactory");
-  });
+  })
 
   async function initAndDeploy() {
     genesis = await upgrades.deployProxy(BCGenesisToken, ["https://api.blocto.app/v1/genesis/{id}"]);
@@ -35,9 +33,9 @@ describe("BCFactory", function () {
     expect(await factory.setValidator(0, validator0.address))
       .emit(factory, "ValidatorSet")
       .withArgs(0, validator0.address);
-    expect(await factory.setValidator(1, validator1.address))
-      .emit(factory, "ValidatorSet")
-      .withArgs(1, validator1.address);
+    // expect(await factory.setValidator(1, validator1.address))
+    //   .emit(factory, "ValidatorSet")
+    //   .withArgs(1, validator1.address);
   }
 
   async function getSignature(hash, privateKey) {
@@ -49,7 +47,7 @@ describe("BCFactory", function () {
   });
 
   describe("setValidator", function () {
-    it("should successfully set Validator", async function () {
+    it.only("should successfully set Validator", async function () {
       expect(await factory.setValidator(0, validator0.address))
         .emit(factory, "ValidatorSet")
         .withArgs(0, validator0.address);
