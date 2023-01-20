@@ -1,5 +1,5 @@
 const {expect} = require("chai");
-const { deployContractUpgradeable, deployContract, number} = require("./helpers");
+const {deployContractUpgradeable, deployContract, number} = require("./helpers");
 
 describe("Integration test", function () {
   let myToken;
@@ -12,13 +12,7 @@ describe("Integration test", function () {
     [owner, holder1, holder2, holder3] = await ethers.getSigners();
   });
 
-  beforeEach(async function () {
+  beforeEach(async function () {});
 
-
-  });
-
-  it("should verify the flow", async function () {
-
-  });
-
+  it("should verify the flow", async function () {});
 });

@@ -32,6 +32,8 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
 
   mapping(bytes32 => bool) private _usedSignatures;
 
+  event OracleMinted(uint256 id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
+
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
     __UUPSUpgradeable_init();
@@ -47,27 +49,30 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     super.setValidator(id, validator);
   }
 
-  function mintGenesis(address to, uint256 randomValue, bytes calldata signature) external {
-    if (!isSignedByValidator(0, hashGenesis(to, randomValue), signature))
-      revert InvalidSignature();
-    genesisToken.mint(to);
+  function mintGenesis(uint256 randomValue, bytes calldata signature) external {
+    if (!isSignedByValidator(0, hashGenesis(_msgSender(), randomValue), signature)) revert InvalidSignature();
+    genesisToken.mint(_msgSender());
   }
 
-  function mintOracle(address to, uint256 partId1,
+  function mintOracle(
+    uint256 partId1,
     uint256 partId2,
     uint256 partId3,
-    uint256 partId4, uint256 randomValue, bytes calldata signature) external {
-    if (!isSignedByValidator(0, hashOracle(to, partId1,
-     partId2,
-     partId3,
-    partId4,randomValue), signature))
+    uint256 partId4,
+    uint256 randomValue,
+    bytes calldata signature
+  ) external {
+    if (!isSignedByValidator(0, hashOracle(_msgSender(), partId1, partId2, partId3, partId4, randomValue), signature))
       revert InvalidSignature();
-    if (genesisToken.ownerOf(partId1) != _msgSender()
-      || genesisToken.ownerOf(partId2) != _msgSender()
-    || genesisToken.ownerOf(partId3) != _msgSender()
-     || genesisToken.ownerOf(partId4) != _msgSender()) revert NotGenesisOwner();
+    if (
+      genesisToken.ownerOf(partId1) != _msgSender() ||
+      genesisToken.ownerOf(partId2) != _msgSender() ||
+      genesisToken.ownerOf(partId3) != _msgSender() ||
+      genesisToken.ownerOf(partId4) != _msgSender()
+    ) revert NotGenesisOwner();
     _saveSignatureAsUsed(signature);
-    oracleToken.mint(to);
+    uint256 oracleId = oracleToken.mint(_msgSender());
+    emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
     uint256[] memory parts = new uint256[](4);
     parts[0] = partId1;
     parts[1] = partId2;
@@ -75,8 +80,6 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     parts[3] = partId4;
     genesisToken.burnBatch(parts);
   }
-
-
 
   function _saveSignatureAsUsed(bytes memory _signature) internal {
     bytes32 key = bytes32(keccak256(abi.encodePacked(_signature)));
@@ -89,19 +92,16 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     return _usedSignatures[key];
   }
 
-  function hashGenesis(
-    address to,
-    uint256 randomValue
-  ) public view returns (bytes32) {
+  function hashGenesis(address to, uint256 randomValue) public view returns (bytes32) {
     return
-    keccak256(
-      abi.encodePacked(
-        "\x19\x01", // EIP-191
-        block.chainid,
-        to,
-        randomValue
-      )
-    );
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01", // EIP-191
+          block.chainid,
+          to,
+          randomValue
+        )
+      );
   }
 
   function hashOracle(
@@ -113,18 +113,17 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 randomValue
   ) public view returns (bytes32) {
     return
-    keccak256(
-      abi.encodePacked(
-        "\x19\x01", // EIP-191
-        block.chainid,
-        to,
-        partId1,
-        partId2,
-        partId3,
-        partId4,
-        randomValue
-      )
-    );
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01", // EIP-191
+          block.chainid,
+          to,
+          partId1,
+          partId2,
+          partId3,
+          partId4,
+          randomValue
+        )
+      );
   }
-
 }
