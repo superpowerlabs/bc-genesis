@@ -22,6 +22,8 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
   using SafeMathUpgradeable for uint256;
 
+  event OracleMinted(uint256 id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
+
   error NotAndERC721(address);
   error InvalidSignature();
   error SignatureAlreadyUsed();
@@ -29,10 +31,6 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
 
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
-
-  mapping(bytes32 => bool) private _usedSignatures;
-
-  event OracleMinted(uint256 id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -70,29 +68,20 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
       genesisToken.ownerOf(partId3) != _msgSender() ||
       genesisToken.ownerOf(partId4) != _msgSender()
     ) revert NotGenesisOwner();
-    _saveSignatureAsUsed(signature);
     uint256 oracleId = oracleToken.mint(_msgSender());
-    emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
     uint256[] memory parts = new uint256[](4);
     parts[0] = partId1;
     parts[1] = partId2;
     parts[2] = partId3;
     parts[3] = partId4;
     genesisToken.burnBatch(parts);
+    emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
   }
 
-  function _saveSignatureAsUsed(bytes memory _signature) internal {
-    bytes32 key = bytes32(keccak256(abi.encodePacked(_signature)));
-    if (_usedSignatures[key]) revert SignatureAlreadyUsed();
-    _usedSignatures[key] = true;
-  }
-
-  function isSignatureUsed(bytes calldata signature) external view returns (bool) {
-    bytes32 key = bytes32(keccak256(abi.encodePacked(signature)));
-    return _usedSignatures[key];
-  }
-
-  function hashGenesis(address to, uint256 randomValue) public view returns (bytes32) {
+  function hashGenesis(
+    address to,
+    uint256 randomValue
+  ) public view returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
