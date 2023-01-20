@@ -31,4 +31,11 @@ contract MockFactory {
     genesisToken.burnBatch(tokenIds);
   }
 
+  function lockGenesis(uint256 tokenId) public {
+    genesisToken.lock(tokenId);
+  }
+  function lockOracle(uint256 tokenId) public {
+    oracleToken.lock(tokenId);
+  }
+
 }
