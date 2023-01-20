@@ -18,4 +18,8 @@ contract BCGenesisToken is BCNFT {
     }
   }
 
+  function setParameters(uint256 blockNumberOnStart_) external onlyOwner {
+    _setParameters(10000, blockNumberOnStart_, true);
+  }
+
 }

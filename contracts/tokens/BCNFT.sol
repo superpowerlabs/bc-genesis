@@ -12,33 +12,33 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error Forbidden();
   error CannotMint();
   error ZeroAddress();
-  error InvalidSupply();
+  error ParametersAlreadySetUp();
   error NotEnoughWLSlots();
   error InvalidDeadline();
   error WhitelistNotSetYet();
+  error InvalidStart();
 
   using AddressUpgradeable for address;
   uint256 private _nextTokenId;
-  uint256 private _maxSupply;
+  uint256 private _initialMaxSupply;
+  uint private _blockNumberOnStart;
   bool private _mintEnded;
+  bool private _decayActive;
 
   address[] public factories;
 
   modifier onlyFactory() {
-    if (
-      isFactory(_msgSender()) ||
-      // owner is authorized as long as there are no factories
-      (!hasFactories() && _msgSender() == owner())
-    ) _;
-    else revert Forbidden();
+    if (!isFactory(_msgSender())) revert Forbidden();
+    _;
   }
 
-  function setMaxSupply(uint256 maxSupply_) external onlyOwner {
-    if (_nextTokenId == 0) {
-      _nextTokenId = 1;
-    }
-    if (_nextTokenId > maxSupply_) revert InvalidSupply();
-    _maxSupply = maxSupply_;
+  function _setParameters(uint256 maxSupply_, uint256 blockNumberOnStart_, bool activateDecay) internal {
+    if (_initialMaxSupply > 0) revert ParametersAlreadySetUp();
+    if (blockNumberOnStart_ < block.number + 1 hours) revert InvalidStart();
+    _blockNumberOnStart = blockNumberOnStart_;
+    _nextTokenId = 1;
+    _initialMaxSupply = maxSupply_;
+    _decayActive = activateDecay;
   }
 
   function setFactory(address factory_, bool enabled) external override onlyOwner {
@@ -85,7 +85,6 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function endMinting() external override onlyOwner {
-    _maxSupply = _nextTokenId - 1;
     _mintEnded = true;
   }
 
@@ -94,7 +93,14 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function maxSupply() external view override returns (uint256) {
-    return _maxSupply;
+    if(_mintEnded) {
+      return totalSupply();
+    } else if (_decayActive) {
+      //TODO: Define Proper Decay Factor
+      return _initialMaxSupply - ((block.number - _blockNumberOnStart)/100);
+    } else {
+      return _initialMaxSupply;
+    }
   }
 
   function nextTokenId() external view override returns (uint256) {
