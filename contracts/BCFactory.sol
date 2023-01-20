@@ -30,8 +30,6 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
 
-  mapping(bytes32 => bool) private _usedSignatures;
-
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
     __UUPSUpgradeable_init();
@@ -66,7 +64,6 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
       || genesisToken.ownerOf(partId2) != _msgSender()
     || genesisToken.ownerOf(partId3) != _msgSender()
      || genesisToken.ownerOf(partId4) != _msgSender()) revert NotGenesisOwner();
-    _saveSignatureAsUsed(signature);
     oracleToken.mint(to);
     uint256[] memory parts = new uint256[](4);
     parts[0] = partId1;
@@ -74,19 +71,6 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     parts[2] = partId3;
     parts[3] = partId4;
     genesisToken.burnBatch(parts);
-  }
-
-
-
-  function _saveSignatureAsUsed(bytes memory _signature) internal {
-    bytes32 key = bytes32(keccak256(abi.encodePacked(_signature)));
-    if (_usedSignatures[key]) revert SignatureAlreadyUsed();
-    _usedSignatures[key] = true;
-  }
-
-  function isSignatureUsed(bytes calldata signature) external view returns (bool) {
-    bytes32 key = bytes32(keccak256(abi.encodePacked(signature)));
-    return _usedSignatures[key];
   }
 
   function hashGenesis(
