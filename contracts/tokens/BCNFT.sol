@@ -79,7 +79,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function mint(address to) external virtual override onlyFactory returns (uint256) {
-    if (_nextTokenId == 0 || _nextTokenId > _maxSupply) revert CannotMint();
+    if (_nextTokenId == 0 || _nextTokenId > maxSupply()) revert CannotMint();
     _safeMint(to, _nextTokenId);
     return _nextTokenId++;
   }
@@ -92,7 +92,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
     return _mintEnded;
   }
 
-  function maxSupply() external view override returns (uint256) {
+  function maxSupply() public view override returns (uint256) {
     if(_mintEnded) {
       return totalSupply();
     } else if (_decayActive) {
