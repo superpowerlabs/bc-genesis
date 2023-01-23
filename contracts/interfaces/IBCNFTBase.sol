@@ -3,9 +3,10 @@ pragma solidity 0.8.17;
 
 // Author: Francesco Sullo <francesco@superpower.io>
 
-import "./ILockable.sol";
+import "@ndujalabs/erc721lockable/contracts/IERC721Lockable.sol";
+import "@ndujalabs/erc721attributable/contracts/IERC721Attributable.sol";
 
-interface IBCNFTBase is ILockable {
+interface IBCNFTBase is IERC721Lockable, IERC721Attributable {
   event TokenURIFrozen();
   event TokenURIUpdated(string uri);
 

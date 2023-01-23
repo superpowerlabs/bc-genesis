@@ -50,7 +50,7 @@ contract BCNFTBase is
   using AddressUpgradeable for address;
 
   error NotALocker();
-  error NotTheGame();
+  error NotTheOwner();
   error AssetDoesNotExist();
   error AlreadyInitiated();
   error NotTheAssetOwner();
@@ -71,6 +71,8 @@ contract BCNFTBase is
 
   mapping(address => bool) private _lockers;
   mapping(uint256 => address) private _lockedBy;
+
+  mapping(uint256 => mapping(address => mapping(uint256 => uint256))) internal _tokenAttributes;
 
   modifier onlyLocker() {
     if (!_lockers[_msgSender()]) {
@@ -120,7 +122,7 @@ contract BCNFTBase is
     override(ERC721Upgradeable, ERC721RoyaltyUpgradeable, ERC721EnumerableUpgradeable)
     returns (bool)
   {
-    return interfaceId == type(ILockable).interfaceId || super.supportsInterface(interfaceId);
+    return interfaceId == type(IERC721Lockable).interfaceId || super.supportsInterface(interfaceId);
   }
 
   function _baseURI() internal view virtual override returns (string memory) {
@@ -145,7 +147,7 @@ contract BCNFTBase is
     return string(abi.encodePacked(_baseTokenURI, "0"));
   }
 
-  // ILockable
+  // IERC721Lockable
   //
   // When a contract is locked, only the locker is approved
   // The advantage of locking an NFT instead of staking is that
@@ -260,6 +262,40 @@ contract BCNFTBase is
     }
     return super.isApprovedForAll(owner, operator);
   }
+
+  // Attributable implementation
+
+  function attributesOf(
+    uint256 _id,
+    address _player,
+    uint256 _index
+  ) external view override returns (uint256) {
+    return _tokenAttributes[_id][_player][_index];
+  }
+
+  function initializeAttributesFor(uint256 _id, address _player) external override {
+    if (_msgSender() != ownerOf(_id)) revert NotTheOwner();
+    if (_tokenAttributes[_id][_player][0] > 0) {
+      revert PlayerAlreadyAuthorized();
+    }
+    _tokenAttributes[_id][_player][0] = 1;
+    emit AttributesInitializedFor(_id, _player);
+  }
+
+  function updateAttributes(
+    uint256 _id,
+    uint256 _index,
+    uint256 _attributes
+  ) external override {
+    if (_tokenAttributes[_id][_msgSender()][0] == 0) {
+      revert PlayerNotAuthorized();
+    }
+    // notice that if the playes set the attributes to zero, it de-authorize itself
+    // and not more changes will be allowed until the NFT owner authorize it again
+    _tokenAttributes[_id][_msgSender()][_index] = _attributes;
+  }
+
+  // ERC Royalty standard
 
   function _burn(uint256 tokenId) internal override (ERC721Upgradeable, ERC721RoyaltyUpgradeable) {
     super._burn(tokenId);
