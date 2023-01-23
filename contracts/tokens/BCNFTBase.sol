@@ -125,7 +125,10 @@ contract BCNFTBase is
     override(ERC721Upgradeable, ERC721RoyaltyUpgradeable, ERC721EnumerableUpgradeable)
     returns (bool)
   {
-    return interfaceId == type(IERC721Attributable).interfaceId || interfaceId == type(IERC721Lockable).interfaceId || super.supportsInterface(interfaceId);
+    return
+      interfaceId == type(IERC721Attributable).interfaceId ||
+      interfaceId == type(IERC721Lockable).interfaceId ||
+      super.supportsInterface(interfaceId);
   }
 
   function _baseURI() internal view virtual override returns (string memory) {
@@ -278,8 +281,9 @@ contract BCNFTBase is
 
   function initializeAttributesFor(uint256 _id, address _player) external override {
     if (_msgSender() != ownerOf(_id)) revert NotTheOwner();
-    if (!_player.isContract()) revert   NotAContract();
-    if (IERC165Upgradeable(_player).supportsInterface(type(IERC721AttributablePlayer).interfaceId)) revert NotAnAttributablePlayer();
+    if (!_player.isContract()) revert NotAContract();
+    if (IERC165Upgradeable(_player).supportsInterface(type(IERC721AttributablePlayer).interfaceId))
+      revert NotAnAttributablePlayer();
     if (_tokenAttributes[_id][_player][0] > 0) {
       revert PlayerAlreadyAuthorized();
     }
@@ -302,7 +306,7 @@ contract BCNFTBase is
 
   // ERC Royalty standard
 
-  function _burn(uint256 tokenId) internal override (ERC721Upgradeable, ERC721RoyaltyUpgradeable) {
+  function _burn(uint256 tokenId) internal override(ERC721Upgradeable, ERC721RoyaltyUpgradeable) {
     super._burn(tokenId);
     _resetTokenRoyalty(tokenId);
   }

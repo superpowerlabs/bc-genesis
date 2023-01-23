@@ -5,7 +5,5 @@ pragma solidity 0.8.17;
 // (c) Superpower Labs Inc
 
 interface IBCToken {
-
   function setParameters(uint256 blockNumberOnStart_) external;
-
 }

@@ -4,7 +4,6 @@ pragma solidity 0.8.17;
 // Author : Jerry Bassat < jerry@superpower.io>
 // (c) Superpower Labs Inc.
 
-
 import "../tokens/BCGenesisToken.sol";
 import "../tokens/BCOracleToken.sol";
 
@@ -27,15 +26,15 @@ contract MockFactory {
     oracleToken.mint(to);
   }
 
-   function burnBatch(uint256[] calldata tokenIds) public {
+  function burnBatch(uint256[] calldata tokenIds) public {
     genesisToken.burnBatch(tokenIds);
   }
 
   function lockGenesis(uint256 tokenId) public {
     genesisToken.lock(tokenId);
   }
+
   function lockOracle(uint256 tokenId) public {
     oracleToken.lock(tokenId);
   }
-
 }

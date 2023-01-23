@@ -78,10 +78,7 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
   }
 
-  function hashGenesis(
-    address to,
-    uint256 randomValue
-  ) public view returns (bytes32) {
+  function hashGenesis(address to, uint256 randomValue) public view returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(

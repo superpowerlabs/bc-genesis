@@ -8,7 +8,6 @@ import "../interfaces/IBCToken.sol";
 import "./BCNFT.sol";
 
 contract BCGenesisToken is BCNFT, IBCToken {
-
   function initialize(string memory tokenUri) public initializer {
     __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
   }
@@ -22,5 +21,4 @@ contract BCGenesisToken is BCNFT, IBCToken {
   function setParameters(uint256 blockNumberOnStart_) external onlyOwner {
     _setParameters(10000, blockNumberOnStart_, true);
   }
-
 }
