@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 // Inspired by Everdragons2 NFTs, https://everdragons2.com
 // Authors: Francesco Sullo <francesco@superpower.io>
+// Collaborators: Jerry Bassat <jerry@superpower.io>
 // (c) Superpower Labs Inc.
 
 import "./BCNFTBase.sol";
@@ -13,9 +14,6 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error CannotMint();
   error ZeroAddress();
   error ParametersAlreadySetUp();
-  error NotEnoughWLSlots();
-  error InvalidDeadline();
-  error WhitelistNotSetYet();
   error InvalidStart();
 
   using AddressUpgradeable for address;
@@ -97,6 +95,9 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
       return totalSupply();
     } else if (_decayActive) {
       //TODO: Define Proper Decay Factor
+      if((block.number - _blockNumberOnStart)/100 > _initialMaxSupply)
+      { return 0;
+      }
       return _initialMaxSupply - ((block.number - _blockNumberOnStart)/100);
     } else {
       return _initialMaxSupply;
