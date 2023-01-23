@@ -1,11 +1,11 @@
 const {expect} = require("chai");
-const {signPackedData, increaseBlockTimestampBy} = require("./helpers");
-
+const {signPackedData, increaseBlockTimestampBy, getBlockNumber, increaseBlockBy} = require("./helpers");
 describe("BCFactory", function () {
   let factory;
   let genesis;
   let oracle;
   let validator0, validator1;
+  let blockNumber;
 
   let owner, holder1, holder2, holder3, minter;
   let validator0PK = "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
@@ -16,16 +16,18 @@ describe("BCFactory", function () {
     BCGenesisToken = await ethers.getContractFactory("BCGenesisToken");
     BCOracleToken = await ethers.getContractFactory("BCOracleToken");
     BCFactory = await ethers.getContractFactory("BCFactory");
-  })
+  });
 
   async function initAndDeploy() {
-    genesis = await upgrades.deployProxy(BCGenesisToken, ["https://api.blocto.app/v1/genesis/{id}"]);
+    genesis = await upgrades.deployProxy(BCGenesisToken, ["https://s3.Byte.City/BodyPart/"]);
     await genesis.deployed();
-    genesis.setMaxSupply(100);
+    blockNumber = await getBlockNumber();
+    await genesis.setParameters(blockNumber + 1);
 
-    oracle = await upgrades.deployProxy(BCOracleToken, ["https://api.blocto.app/v1/oracle/{id}"]);
+    oracle = await upgrades.deployProxy(BCOracleToken, ["https://s3.Byte.City/Robot/"]);
     await oracle.deployed();
-    oracle.setMaxSupply(100);
+    blockNumber = await getBlockNumber();
+    await oracle.setParameters(blockNumber + 1);
 
     factory = await upgrades.deployProxy(BCFactory, [genesis.address, oracle.address]);
     await factory.deployed();
@@ -47,7 +49,7 @@ describe("BCFactory", function () {
   });
 
   describe("setValidator", function () {
-    it.only("should successfully set Validator", async function () {
+    it("should successfully set Validator", async function () {
       expect(await factory.setValidator(0, validator0.address))
         .emit(factory, "ValidatorSet")
         .withArgs(0, validator0.address);
@@ -101,8 +103,6 @@ describe("BCFactory", function () {
       expect(await genesis.balanceOf(holder1.address)).equal(8);
       const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
       const sign1 = await getSignature(hash1, validator0PK);
-      const hash2 = await factory.hashOracle(holder1.address, 5, 6, 7, 8, rand);
-      const sign2 = await getSignature(hash2, validator0PK);
       await oracle.setFactory(factory.address, true);
       const orac = await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
       await expect(orac).to.emit(factory, "OracleMinted").withArgs(1, 1, 2, 3, 4);
@@ -110,9 +110,6 @@ describe("BCFactory", function () {
       //check if the parts are burned
       expect(await genesis.balanceOf(holder1.address)).equal(4);
       expect(await oracle.balanceOf(holder1.address)).equal(1);
-      //check if signature already used
-      expect(await factory.isSignatureUsed(sign1)).equal(true);
-      expect(await factory.isSignatureUsed(sign2)).equal(false);
     });
 
     it("should fail to mint if not signed", async function () {

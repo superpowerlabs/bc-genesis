@@ -60,6 +60,14 @@ const Helpers = {
     return (await this.ethers.provider.getBlock()).timestamp;
   },
 
+  async getBlockNumber() {
+    return await this.ethers.provider.getBlockNumber();
+  },
+
+  async increaseBlockBy() {
+    await this.ethers.provider.send("evm_mine");
+  },
+
   addr0: "0x0000000000000000000000000000000000000000",
 
   async increaseBlockTimestampBy(offset) {
