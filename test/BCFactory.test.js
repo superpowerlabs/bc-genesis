@@ -1,5 +1,5 @@
 const {expect} = require("chai");
-const {signPackedData, increaseBlockTimestampBy, getBlockNumber, increaseBlockBy} = require("./helpers");
+const {signPackedData, increaseBlockTimestampBy, getBlockNumber} = require("./helpers");
 describe("BCFactory", function () {
   let factory;
   let genesis;
