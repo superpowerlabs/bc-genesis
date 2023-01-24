@@ -5,7 +5,6 @@ pragma solidity 0.8.17;
 // (c) Superpower Labs Inc
 
 interface IBCNFT {
-
   function setFactory(address factory_, bool enabled) external;
 
   function mint(address to) external returns (uint256);

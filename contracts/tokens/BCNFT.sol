@@ -19,7 +19,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   using AddressUpgradeable for address;
   uint256 private _nextTokenId;
   uint256 private _initialMaxSupply;
-  uint private _blockNumberOnStart;
+  uint256 private _blockNumberOnStart;
   bool private _mintEnded;
   bool private _decayActive;
 
@@ -30,7 +30,11 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
     _;
   }
 
-  function _setParameters(uint256 maxSupply_, uint256 blockNumberOnStart_, bool activateDecay) internal {
+  function _setParameters(
+    uint256 maxSupply_,
+    uint256 blockNumberOnStart_,
+    bool activateDecay
+  ) internal {
     if (_initialMaxSupply > 0) revert ParametersAlreadySetUp();
     if (blockNumberOnStart_ < block.number) revert InvalidStart();
     _blockNumberOnStart = blockNumberOnStart_;
@@ -91,14 +95,14 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function maxSupply() public view override returns (uint256) {
-    if(_mintEnded) {
+    if (_mintEnded) {
       return totalSupply();
     } else if (_decayActive) {
       //TODO: Define Proper Decay Factor
-      if((block.number - _blockNumberOnStart)/100 > _initialMaxSupply)
-      { return 0;
+      if ((block.number - _blockNumberOnStart) / 100 > _initialMaxSupply) {
+        return 0;
       }
-      return _initialMaxSupply - ((block.number - _blockNumberOnStart)/100);
+      return _initialMaxSupply - ((block.number - _blockNumberOnStart) / 100);
     } else {
       return _initialMaxSupply;
     }
