@@ -282,7 +282,7 @@ contract BCNFTBase is
   function initializeAttributesFor(uint256 _id, address _player) external override {
     if (_msgSender() != ownerOf(_id)) revert NotTheOwner();
     if (!_player.isContract()) revert NotAContract();
-    if (IERC165Upgradeable(_player).supportsInterface(type(IERC721AttributablePlayer).interfaceId))
+    if (!IERC165Upgradeable(_player).supportsInterface(type(IERC721AttributablePlayer).interfaceId))
       revert NotAnAttributablePlayer();
     if (_tokenAttributes[_id][_player][0] > 0) {
       revert PlayerAlreadyAuthorized();
