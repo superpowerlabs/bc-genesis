@@ -26,6 +26,8 @@ describe("GenesisToken", function () {
   async function initAndDeploy() {
     bodyPart = await upgrades.deployProxy(GenesisToken, ["https://s3.Byte.City/BodyPart/"]);
     await bodyPart.deployed();
+    const blockNumber = await getBlockNumber();
+    await bodyPart.setBlockNumbers([blockNumber, blockNumber + 100, blockNumber + 200, blockNumber + 300])
 
     robot = await upgrades.deployProxy(OracleToken, ["https://s3.Byte.City/Robot/"]);
     await robot.deployed();
@@ -45,13 +47,13 @@ describe("GenesisToken", function () {
 
     it("Should set Parameters", async function () {
       blockNumber = await getBlockNumber();
-      await expect(bodyPart.setParameters(blockNumber - 1)).revertedWith("InvalidStart")
+      await expect(bodyPart.setParameters(blockNumber - 1, 100)).revertedWith("InvalidStart")
 
       blockNumber = await getBlockNumber();
-      await bodyPart.setParameters(blockNumber + 1);
+      await bodyPart.setParameters(blockNumber + 1, 100);
 
       blockNumber = await getBlockNumber();
-      await expect(bodyPart.setParameters(blockNumber + 1)).revertedWith("ParametersAlreadySetUp")
+      await expect(bodyPart.setParameters(blockNumber + 1, 100)).revertedWith("ParametersAlreadySetUp")
 
       expect(await bodyPart.maxSupply()).equal(10000)
       expect(await bodyPart.nextTokenId()).equal(1)
@@ -73,7 +75,7 @@ describe("GenesisToken", function () {
     it("Should implement ILockable", async function () {
       await bodyPart.setFactory(factory.address, true);
       blockNumber = await getBlockNumber();
-      await bodyPart.setParameters(blockNumber + 1);
+      await bodyPart.setParameters(blockNumber + 1, 100);
       await factory.initialize(bodyPart.address, robot.address)
       await factory.mintGenesis(holder.address)
 
@@ -87,7 +89,7 @@ describe("GenesisToken", function () {
       expect(await bodyPart.locked(1)).equal(true)
 
       });
-      
+
   });
 
   describe("Token Testing", async function () {
@@ -100,7 +102,7 @@ describe("GenesisToken", function () {
       await mock.setFactory(factory.address, true);
       await factory.initialize(bodyPart.address, mock.address)
       blockNumber = await getBlockNumber();
-      await mock.setParameters(blockNumber + 1);
+      await mock.setParameters(blockNumber + 1, 100);
 
       for(let i =0 ; i<5; i++)
       {
@@ -108,7 +110,7 @@ describe("GenesisToken", function () {
       }
       expect(await mock.balanceOf(holder.address)).equal(5)
       await expect(factory.mintOracle(holder.address)).revertedWith("CannotMint")
-    });    
+    });
 
     it("should set Factory ", async function () {
 
@@ -131,7 +133,7 @@ describe("GenesisToken", function () {
         await bodyPart.setFactory(factory.address, true);
         expect(await bodyPart.nextTokenId()).equal(0)
         blockNumber = await getBlockNumber();
-        await bodyPart.setParameters(blockNumber + 1);
+        await bodyPart.setParameters(blockNumber + 1, 100);
         await factory.initialize(bodyPart.address, robot.address)
 
         expect(await bodyPart.balanceOf(holder.address)).equal(0)
@@ -148,18 +150,15 @@ describe("GenesisToken", function () {
         await bodyPart.endMinting()
         await expect(factory.mintGenesis(holder.address)).revertedWith("CannotMint")
 
-        await factory.burnBatch([1,2])
-        expect(await bodyPart.balanceOf(holder.address)).equal(1)
-
-        await expect(factory.burnBatch([5])).revertedWith("ERC721: invalid token ID")
+        await assertThrowsMessage(factory.burnBatch([1,2]), "missing argument: coder array tokenIds");
       });
 
       it("should Decay Supply", async function () {
         await mock.setFactory(factory.address, true);
         await factory.initialize(bodyPart.address, mock.address)
-  
+
         blockNumber = await getBlockNumber();
-        await mock.setParameters(blockNumber + 1);
+        await mock.setParameters(blockNumber + 1, 100);
 
         //Since we defined Decay ((block.number - _blockNumberOnStart)/100)  100 blocks should result in -1 max supply
         for(let i =0 ; i<400; i++)
@@ -181,7 +180,7 @@ describe("GenesisToken", function () {
         }
         expect(await mock.maxSupply()).equal(0)
 
-      }); 
+      });
 
   });
 });

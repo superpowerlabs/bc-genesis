@@ -17,11 +17,12 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error InvalidStart();
 
   using AddressUpgradeable for address;
+
   uint256 private _nextTokenId;
   uint256 private _initialMaxSupply;
   uint256 private _blockNumberOnStart;
+  uint256 private _decayBlocks;
   bool private _mintEnded;
-  bool private _decayActive;
 
   address[] public factories;
 
@@ -33,14 +34,14 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   function _setParameters(
     uint256 maxSupply_,
     uint256 blockNumberOnStart_,
-    bool activateDecay
+    uint256 decayBlocks_
   ) internal {
     if (_initialMaxSupply > 0) revert ParametersAlreadySetUp();
     if (blockNumberOnStart_ < block.number) revert InvalidStart();
     _blockNumberOnStart = blockNumberOnStart_;
     _nextTokenId = 1;
     _initialMaxSupply = maxSupply_;
-    _decayActive = activateDecay;
+    _decayBlocks = decayBlocks_;
   }
 
   function setFactory(address factory_, bool enabled) external override onlyOwner {
@@ -80,7 +81,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
     return false;
   }
 
-  function mint(address to) external virtual override onlyFactory returns (uint256) {
+  function mint(address to) public virtual override onlyFactory returns (uint256) {
     if (_nextTokenId == 0 || _nextTokenId > maxSupply()) revert CannotMint();
     _safeMint(to, _nextTokenId);
     return _nextTokenId++;
@@ -97,12 +98,11 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   function maxSupply() public view override returns (uint256) {
     if (_mintEnded) {
       return totalSupply();
-    } else if (_decayActive) {
-      //TODO: Define Proper Decay Factor
-      if ((block.number - _blockNumberOnStart) / 100 > _initialMaxSupply) {
+    } else if (_decayBlocks > 0) {
+      if ((block.number - _blockNumberOnStart) / _decayBlocks > _initialMaxSupply) {
         return 0;
       }
-      return _initialMaxSupply - ((block.number - _blockNumberOnStart) / 100);
+      return _initialMaxSupply - ((block.number - _blockNumberOnStart) / _decayBlocks);
     } else {
       return _initialMaxSupply;
     }

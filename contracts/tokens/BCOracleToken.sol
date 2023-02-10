@@ -12,7 +12,7 @@ contract BCOracleToken is BCNFT, IBCToken {
     __BCNFTBase_init("BYTE City Oracle Token", "BCOT", tokenUri);
   }
 
-  function setParameters(uint256 blockNumberOnStart_) external onlyOwner {
-    _setParameters(1000, blockNumberOnStart_, false);
+  function setParameters(uint256 blockNumberOnStart_, uint256 decayBlocks_) external onlyOwner {
+    _setParameters(1000, blockNumberOnStart_, decayBlocks_);
   }
 }

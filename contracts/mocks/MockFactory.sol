@@ -26,7 +26,7 @@ contract MockFactory {
     oracleToken.mint(to);
   }
 
-  function burnBatch(uint256[] calldata tokenIds) public {
+  function burnBatch(uint256[4] calldata tokenIds) public {
     genesisToken.burnBatch(tokenIds);
   }
 

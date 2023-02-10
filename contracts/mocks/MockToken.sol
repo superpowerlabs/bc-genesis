@@ -12,7 +12,7 @@ contract BCMockToken is BCNFT, IBCToken {
     __BCNFTBase_init("Mock Token with low Supply", "MOCK", tokenUri);
   }
 
-  function setParameters(uint256 blockNumberOnStart_) external onlyOwner {
-    _setParameters(5, blockNumberOnStart_, true);
+  function setParameters(uint256 blockNumberOnStart_, uint256 decayBlocks_) external onlyOwner {
+    _setParameters(5, blockNumberOnStart_, decayBlocks_);
   }
 }
