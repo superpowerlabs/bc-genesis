@@ -5,9 +5,10 @@ pragma solidity 0.8.17;
 // (c) Superpower Labs Inc.
 
 import "../interfaces/IBCToken.sol";
+import "../interfaces/IRevealable.sol";
 import "./BCNFT.sol";
 
-contract BCGenesisToken is BCNFT, IBCToken {
+contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
   error BlockNumbersOutOfOrder();
   error BlockNumbersAlreadySet();
   error BlockNumberNotSet();
@@ -40,7 +41,7 @@ contract BCGenesisToken is BCNFT, IBCToken {
 
   // Set a list of block numbers that will be used to get info about intervals
   // that will be used by the reveal app
-  function setBlockNumbers(uint256[] memory blockNumbers_) external onlyOwner {
+  function setBlockNumbers(uint256[] memory blockNumbers_) external override onlyOwner {
     if (_blockRanges[1].closingBlockNumber > 0) {
       revert BlockNumbersAlreadySet();
     }
@@ -58,7 +59,7 @@ contract BCGenesisToken is BCNFT, IBCToken {
 
   // Add a list of block numbers that will be used to get info about intervals
   // if the initial set is insufficient to cover the minting
-  function addBlockNumbers(uint256[] memory newBlockNumbers_) external onlyOwner {
+  function addBlockNumbers(uint256[] memory newBlockNumbers_) external override onlyOwner {
     if (_blockRanges[1].closingBlockNumber == 0) {
       revert BlockNumberNotSet();
     }
@@ -76,7 +77,7 @@ contract BCGenesisToken is BCNFT, IBCToken {
     _lastBlockNumberId = _lastBlockNumberId + newBlockNumbers_.length;
   }
 
-  function getClosingBlockNumberIds() external view returns (uint256[] memory) {
+  function getClosingBlockNumberIds() external view override returns (uint256[] memory) {
     uint256[] memory blockNumberIds = new uint256[](_lastBlockNumberId);
     for (uint256 i = 1; i <= _lastBlockNumberId; i++) {
       blockNumberIds[i - 1] = _blockRanges[i].closingBlockNumber;
@@ -84,7 +85,7 @@ contract BCGenesisToken is BCNFT, IBCToken {
     return blockNumberIds;
   }
 
-  function getBLockRangeByBlockNumberId(uint256 blockNumberId_) external view returns (uint256, uint256, uint256, uint256) {
+  function getBLockRangeByBlockNumberId(uint256 blockNumberId_) external override view returns (uint256, uint256, uint256, uint256) {
     if (_blockRanges[blockNumberId_].closingBlockNumber == 0) {
       revert BlockNumberOutOfRange();
     }
@@ -96,7 +97,7 @@ contract BCGenesisToken is BCNFT, IBCToken {
     );
   }
 
-  function findBlockIdByBlockNumber(uint256 blockNumber_) public view returns (uint256) {
+  function findBlockIdByBlockNumber(uint256 blockNumber_) public view override returns (uint256) {
     if (blockNumber_ == 0) {
       blockNumber_ = block.number;
     }
