@@ -22,12 +22,13 @@ describe("BCFactory", function () {
     genesis = await upgrades.deployProxy(BCGenesisToken, ["https://s3.Byte.City/BodyPart/"]);
     await genesis.deployed();
     blockNumber = await getBlockNumber();
-    await genesis.setParameters(blockNumber + 1);
+    await genesis.setParameters(blockNumber + 1, 100);
+    await genesis.setBlockNumbers([blockNumber, blockNumber + 100, blockNumber + 200, blockNumber + 300])
 
     oracle = await upgrades.deployProxy(BCOracleToken, ["https://s3.Byte.City/Robot/"]);
     await oracle.deployed();
     blockNumber = await getBlockNumber();
-    await oracle.setParameters(blockNumber + 1);
+    await oracle.setParameters(blockNumber + 1, 100);
 
     factory = await upgrades.deployProxy(BCFactory, [genesis.address, oracle.address]);
     await factory.deployed();
