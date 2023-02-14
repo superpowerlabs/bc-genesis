@@ -21,5 +21,5 @@ interface IRevealable {
       uint256
     );
 
-  function findBlockIdByBlockNumber(uint256 blockNumber_) external view returns (uint256);
+  function findBlockIdByBlockNumber(uint256 blockNumber_) external view returns (uint256, bool);
 }

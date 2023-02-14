@@ -13,6 +13,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
   error BlockNumbersAlreadySet();
   error BlockNumberNotSet();
   error BlockNumberOutOfRange();
+  error BlockNumbersInvalid();
 
   struct BlockRange {
     uint32 startingBlockNumber;
@@ -41,19 +42,23 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
   // Set a list of block numbers that will be used to get info about intervals
   // that will be used by the reveal app
   function setBlockNumbers(uint256[] memory blockNumbers_) external override onlyOwner {
+    // the first block number is the minimum accepted block number
     if (_blockRanges[1].closingBlockNumber > 0) {
       revert BlockNumbersAlreadySet();
+    }
+    if (blockNumbers_.length < 2) {
+      revert BlockNumbersInvalid();
     }
     for (uint256 i = 0; i < blockNumbers_.length; i++) {
       if (i > 0 && blockNumbers_[i] < blockNumbers_[i - 1]) {
         revert BlockNumbersOutOfOrder();
       }
       if (i > 0) {
-        _blockRanges[i].startingBlockNumber = uint32(blockNumbers_[i - 1]);
+        _blockRanges[i - 1].startingBlockNumber = uint32(blockNumbers_[i - 1]) + 1;
+        _blockRanges[i - 1].closingBlockNumber = uint32(blockNumbers_[i]);
       }
-      _blockRanges[i].closingBlockNumber = uint32(blockNumbers_[i]);
     }
-    _lastBlockNumberId = blockNumbers_.length;
+    _lastBlockNumberId = blockNumbers_.length - 1;
   }
 
   // Add a list of block numbers that will be used to get info about intervals
@@ -63,25 +68,25 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
       revert BlockNumberNotSet();
     }
     for (uint256 i = 0; i < newBlockNumbers_.length; i++) {
-      if (newBlockNumbers_[i] < _blockRanges[_lastBlockNumberId + i].closingBlockNumber) {
+      if (newBlockNumbers_[i] <= _blockRanges[_lastBlockNumberId].closingBlockNumber) {
         revert BlockNumbersOutOfOrder();
       }
       if (i == 0) {
-        _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber =
+        _blockRanges[_lastBlockNumberId + i].startingBlockNumber =
           uint32(_blockRanges[_lastBlockNumberId].closingBlockNumber) +
           1;
       } else {
-        _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber = uint32(newBlockNumbers_[i - 1]) + 1;
+        _blockRanges[_lastBlockNumberId + i].startingBlockNumber = uint32(newBlockNumbers_[i - 1]) + 1;
       }
-      _blockRanges[_lastBlockNumberId + i + 1].closingBlockNumber = uint32(newBlockNumbers_[i]);
+      _blockRanges[_lastBlockNumberId + i].closingBlockNumber = uint32(newBlockNumbers_[i]);
     }
     _lastBlockNumberId = _lastBlockNumberId + newBlockNumbers_.length;
   }
 
   function getClosingBlockNumberIds() external view override returns (uint256[] memory) {
     uint256[] memory blockNumberIds = new uint256[](_lastBlockNumberId);
-    for (uint256 i = 1; i <= _lastBlockNumberId; i++) {
-      blockNumberIds[i - 1] = _blockRanges[i].closingBlockNumber;
+    for (uint256 i = 0; i <= _lastBlockNumberId; i++) {
+      blockNumberIds[i] = _blockRanges[i].closingBlockNumber;
     }
     return blockNumberIds;
   }
@@ -108,25 +113,25 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
     );
   }
 
-  function findBlockIdByBlockNumber(uint256 blockNumber_) public view override returns (uint256) {
+  function findBlockIdByBlockNumber(uint256 blockNumber_) public view override returns (uint256, bool) {
     if (blockNumber_ == 0) {
       blockNumber_ = block.number;
     }
     for (uint256 i = 1; i <= _lastBlockNumberId; i++) {
       if (blockNumber_ >= _blockRanges[i].startingBlockNumber &&
         block.number <= _blockRanges[i].closingBlockNumber) {
-        return i;
+        return (i, true);
       }
     }
-    return 0;
+    return (0, false);
   }
 
   // get the block range that contains the current block number, updates
   // the last token id and the number of tokens in the block range and
   // mints a new token and return the token id
   function mint(address to) public virtual override onlyFactory returns (uint256) {
-    uint256 blockNumberId = findBlockIdByBlockNumber(block.number);
-    if (blockNumberId == 0) revert BlockNumberOutOfRange();
+    (uint256 blockNumberId, bool found) = findBlockIdByBlockNumber(block.number);
+    if (!found) revert BlockNumberOutOfRange();
     _blockRanges[blockNumberId].lastTokenId = uint32(super.mint(to));
     _blockRanges[blockNumberId].tokensInBlockRange++;
     return uint256(_blockRanges[blockNumberId].lastTokenId);
