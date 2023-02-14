@@ -14,7 +14,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
   error BlockNumberNotSet();
   error BlockNumberOutOfRange();
 
-  struct BlockRange{
+  struct BlockRange {
     uint32 startingBlockNumber;
     uint32 closingBlockNumber;
     uint32 lastTokenId;
@@ -23,7 +23,6 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
 
   uint256 private _lastBlockNumberId;
   mapping(uint256 => BlockRange) private _blockRanges;
-
 
   function initialize(string memory tokenUri) public initializer {
     __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
@@ -52,7 +51,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
       if (i > 0) {
         _blockRanges[i].startingBlockNumber = uint32(blockNumbers_[i - 1]);
       }
-      _blockRanges[i + 1].closingBlockNumber = uint32(blockNumbers_[i]);
+      _blockRanges[i].closingBlockNumber = uint32(blockNumbers_[i]);
     }
     _lastBlockNumberId = blockNumbers_.length;
   }
@@ -68,7 +67,9 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
         revert BlockNumbersOutOfOrder();
       }
       if (i == 0) {
-        _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber = uint32(_blockRanges[_lastBlockNumberId].closingBlockNumber) + 1;
+        _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber =
+          uint32(_blockRanges[_lastBlockNumberId].closingBlockNumber) +
+          1;
       } else {
         _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber = uint32(newBlockNumbers_[i - 1]) + 1;
       }
@@ -85,7 +86,17 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
     return blockNumberIds;
   }
 
-  function getBLockRangeByBlockNumberId(uint256 blockNumberId_) external override view returns (uint256, uint256, uint256, uint256) {
+  function getBlockRangeByBlockNumberId(uint256 blockNumberId_)
+    external
+    view
+    override
+    returns (
+      uint256,
+      uint256,
+      uint256,
+      uint256
+    )
+  {
     if (_blockRanges[blockNumberId_].closingBlockNumber == 0) {
       revert BlockNumberOutOfRange();
     }
@@ -101,8 +112,9 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
     if (blockNumber_ == 0) {
       blockNumber_ = block.number;
     }
-    for (uint i = 1; i <= _lastBlockNumberId; i++) {
-      if (blockNumber_ >= _blockRanges[i].startingBlockNumber && block.number <= _blockRanges[i].closingBlockNumber) {
+    for (uint256 i = 1; i <= _lastBlockNumberId; i++) {
+      if (blockNumber_ >= _blockRanges[i].startingBlockNumber &&
+        block.number <= _blockRanges[i].closingBlockNumber) {
         return i;
       }
     }
@@ -117,8 +129,6 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
     if (blockNumberId == 0) revert BlockNumberOutOfRange();
     _blockRanges[blockNumberId].lastTokenId = uint32(super.mint(to));
     _blockRanges[blockNumberId].tokensInBlockRange++;
-    return uint(_blockRanges[blockNumberId].lastTokenId);
+    return uint256(_blockRanges[blockNumberId].lastTokenId);
   }
-
-
 }

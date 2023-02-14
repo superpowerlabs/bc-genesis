@@ -11,8 +11,15 @@ interface IRevealable {
 
   function getClosingBlockNumberIds() external view returns (uint256[] memory);
 
-  function getBLockRangeByBlockNumberId(uint256 blockNumberId_) external view returns (uint256, uint256, uint256, uint256);
+  function getBlockRangeByBlockNumberId(uint256 blockNumberId_)
+    external
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256,
+      uint256
+    );
 
   function findBlockIdByBlockNumber(uint256 blockNumber_) external view returns (uint256);
-
 }
