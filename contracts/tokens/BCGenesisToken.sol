@@ -117,7 +117,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
     if (blockNumber_ == 0) {
       blockNumber_ = block.number;
     }
-    for (uint256 i = 1; i <= _lastBlockNumberId; i++) {
+    for (uint256 i = 0; i <= _lastBlockNumberId; i++) {
       if (blockNumber_ >= _blockRanges[i].startingBlockNumber &&
         block.number <= _blockRanges[i].closingBlockNumber) {
         return (i, true);

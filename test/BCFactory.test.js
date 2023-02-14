@@ -23,7 +23,7 @@ describe("BCFactory", function () {
     await genesis.deployed();
     blockNumber = await getBlockNumber();
     await genesis.setParameters(blockNumber + 1, 100);
-    await genesis.setBlockNumbers([blockNumber, blockNumber + 100, blockNumber + 200, blockNumber + 300])
+    await genesis.setBlockNumbers([blockNumber + 1, blockNumber + 100, blockNumber + 200, blockNumber + 300])
 
     oracle = await upgrades.deployProxy(BCOracleToken, ["https://s3.Byte.City/Robot/"]);
     await oracle.deployed();
