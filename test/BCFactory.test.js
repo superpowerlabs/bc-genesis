@@ -1,17 +1,18 @@
 const {expect} = require("chai");
-const {signPackedData, increaseBlockTimestampBy, getBlockNumber} = require("./helpers");
+const {getRoot, getProof} = require("./helpers");
+
+const {signPackedData, assertThrowsMessage, getBlockNumber} = require("./helpers");
 describe("BCFactory", function () {
   let factory;
   let genesis;
   let oracle;
-  let validator0, validator1;
   let blockNumber;
 
-  let owner, holder1, holder2, holder3, minter;
+  let owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7;
   let validator0PK = "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
 
   before(async function () {
-    [owner, holder1, holder2, holder3, validator0, validator1] = await ethers.getSigners();
+    [owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7] = await ethers.getSigners();
 
     BCGenesisToken = await ethers.getContractFactory("BCGenesisToken");
     BCOracleToken = await ethers.getContractFactory("BCOracleToken");
@@ -33,12 +34,12 @@ describe("BCFactory", function () {
     factory = await upgrades.deployProxy(BCFactory, [genesis.address, oracle.address]);
     await factory.deployed();
 
-    expect(await factory.setValidator(0, validator0.address))
-      .emit(factory, "ValidatorSet")
-      .withArgs(0, validator0.address);
-    // expect(await factory.setValidator(1, validator1.address))
-    //   .emit(factory, "ValidatorSet")
-    //   .withArgs(1, validator1.address);
+    await genesis.setFactory(factory.address, true);
+    await oracle.setFactory(factory.address, true);
+
+    await expect(factory.setRoot(getRoot()))
+        .emit(factory, "RootSet")
+        .withArgs(getRoot());
   }
 
   async function getSignature(hash, privateKey) {
@@ -49,114 +50,97 @@ describe("BCFactory", function () {
     await initAndDeploy();
   });
 
-  describe("setValidator", function () {
-    it("should successfully set Validator", async function () {
-      expect(await factory.setValidator(0, validator0.address))
-        .emit(factory, "ValidatorSet")
-        .withArgs(0, validator0.address);
-    });
-  });
-
-  describe("hashGenesis", function () {
-    it("should successfully hash genesis", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder1.address, rand);
-      expect(hash).to.be.a("string");
-    });
-  });
-
   describe("mintGenesis", function () {
     it("should mint parts", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder1.address, rand);
-      const sign = await getSignature(hash, validator0PK);
-      await genesis.setFactory(factory.address, true);
-      const part = await factory.connect(holder1).mintGenesis(rand, sign);
-      expect(part.hash).to.exist;
+      let proof = getProof(wl1.address);
+      await factory.connect(wl1).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
     });
 
-    it("should fail to mint if not signed", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder2.address, rand);
-      const sign = await getSignature(hash, validator0PK);
-      await genesis.setFactory(factory.address, true);
-      await expect(factory.connect(holder1).mintGenesis(rand, sign)).revertedWith("InvalidSignature()");
+    it("should fail to mint if wrong proof", async function () {
+      let proof = getProof(wl2.address);
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof),
+          "InvalidProof()");
     });
-  });
 
-  describe("hashOracle", function () {
-    it("should successfully hash oracle", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
-      expect(hash1).to.be.a("string");
-    });
   });
 
   describe("mintOracle", function () {
     it("should mint oracle", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder1.address, rand);
-      const sign = await getSignature(hash, validator0PK);
-      await genesis.setFactory(factory.address, true);
-      for (let x = 0; x < 8; x++) {
-        await factory.connect(holder1).mintGenesis(rand, sign);
-      }
-      expect(await genesis.balanceOf(holder1.address)).equal(8);
-      const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
-      const sign1 = await getSignature(hash1, validator0PK);
-      await oracle.setFactory(factory.address, true);
-      const orac = await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
-      await expect(orac).to.emit(factory, "OracleMinted").withArgs(1, 1, 2, 3, 4);
-      expect(orac.hash).to.exist;
-      //check if the parts are burned
-      expect(await genesis.balanceOf(holder1.address)).equal(4);
-      expect(await oracle.balanceOf(holder1.address)).equal(1);
-    });
+      let proof = getProof(wl1.address);
+      await factory.connect(wl1).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+      proof = getProof(wl2.address);
+      await factory.connect(wl2).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl2.address)).to.equal(1);
+      proof = getProof(wl3.address);
+      await factory.connect(wl3).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl3.address)).to.equal(1);
+      proof = getProof(wl4.address);
+      await factory.connect(wl4).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl4.address)).to.equal(1);
 
-    it("should fail to mint if not signed", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder1.address, rand);
-      const sign = await getSignature(hash, validator0PK);
-      await genesis.setFactory(factory.address, true);
-      for (let x = 0; x < 4; x++) {
-        await factory.connect(holder1).mintGenesis(rand, sign);
-      }
-      expect(await genesis.balanceOf(holder1.address)).equal(4);
-      const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
-      const sign1 = await getSignature(hash1, validator0PK);
-      await oracle.setFactory(factory.address, true);
-      await expect(factory.connect(holder2).mintOracle(1, 2, 3, 4, rand, sign1)).revertedWith("InvalidSignature()");
+      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 2);
+      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, 3);
+      await genesis.connect(wl4)["safeTransferFrom(address,address,uint256)"](wl4.address, wl1.address, 4);
+
+      expect(await genesis.balanceOf(wl1.address)).equal(4);
+
+      const mintedOracle = await factory.connect(wl1).mintOracle(1, 2, 3, 4);
+      await expect(mintedOracle).to.emit(factory, "OracleMinted").withArgs(1, 1, 2, 3, 4);
+      expect(mintedOracle.hash).to.exist;
+      //check if the parts are burned
+      expect(await genesis.balanceOf(wl1.address)).equal(0);
+      expect(await oracle.balanceOf(wl1.address)).equal(1);
     });
 
     it("should revert trying to use already used parts", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder1.address, rand);
-      const sign = await getSignature(hash, validator0PK);
-      await genesis.setFactory(factory.address, true);
-      for (let x = 0; x < 4; x++) {
-        await factory.connect(holder1).mintGenesis(rand, sign);
-      }
-      expect(await genesis.balanceOf(holder1.address)).equal(4);
-      const hash1 = await factory.hashOracle(holder1.address, 1, 2, 3, 4, rand);
-      const sign1 = await getSignature(hash1, validator0PK);
-      await oracle.setFactory(factory.address, true);
-      await factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1);
-      await expect(factory.connect(holder1).mintOracle(1, 2, 3, 4, rand, sign1)).revertedWith("ERC721: invalid token ID");
+      let proof = getProof(wl1.address);
+      await factory.connect(wl1).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+      proof = getProof(wl2.address);
+      await factory.connect(wl2).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl2.address)).to.equal(1);
+      proof = getProof(wl3.address);
+      await factory.connect(wl3).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl3.address)).to.equal(1);
+      proof = getProof(wl4.address);
+      await factory.connect(wl4).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl4.address)).to.equal(1);
+
+      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 2);
+      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, 3);
+      await genesis.connect(wl4)["safeTransferFrom(address,address,uint256)"](wl4.address, wl1.address, 4);
+
+      expect(await genesis.balanceOf(wl1.address)).equal(4);
+
+      await factory.connect(wl1).mintOracle(1, 2, 3, 4);
+      await assertThrowsMessage(factory.connect(wl1).mintOracle(1, 2, 3, 4), "ERC721: invalid token ID");
+
     });
 
     it("should revert if not owner of parts", async function () {
-      const rand = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
-      const hash = await factory.hashGenesis(holder1.address, rand);
-      const sign = await getSignature(hash, validator0PK);
-      await genesis.setFactory(factory.address, true);
-      for (let x = 0; x < 4; x++) {
-        await factory.connect(holder1).mintGenesis(rand, sign);
-      }
-      expect(await genesis.balanceOf(holder1.address)).equal(4);
-      const hash1 = await factory.hashOracle(holder2.address, 1, 2, 3, 4, rand);
-      const sign1 = await getSignature(hash1, validator0PK);
-      await oracle.setFactory(factory.address, true);
-      await expect(factory.connect(holder2).mintOracle(1, 2, 3, 4, rand, sign1)).revertedWith("NotGenesisOwner()");
+      let proof = getProof(wl1.address);
+      await factory.connect(wl1).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+      proof = getProof(wl2.address);
+      await factory.connect(wl2).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl2.address)).to.equal(1);
+      proof = getProof(wl3.address);
+      await factory.connect(wl3).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl3.address)).to.equal(1);
+      proof = getProof(wl4.address);
+      await factory.connect(wl4).mintGenesis(proof);
+      expect(await genesis.balanceOf(wl4.address)).to.equal(1);
+
+      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 2);
+      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, 3);
+      // await genesis.connect(wl4)["safeTransferFrom(address,address,uint256)"](wl4.address, wl1.address, 4);
+
+      expect(await genesis.balanceOf(wl1.address)).equal(3);
+
+      await assertThrowsMessage(factory.connect(wl1).mintOracle(1, 2, 3, 4), "NotGenesisOwner()");
+
     });
   });
 });
