@@ -7,7 +7,9 @@
     "compile": "npx hardhat compile",
     "lint": "prettier --write 'contracts/**/*.sol' && solhint 'contracts/**/*.sol'",
     "format": "npx prettier --write ./test/fixtures/**/*.js ./**/*.js",
-    "coverage": "npx hardhat coverage"
+    "coverage": "npx hardhat coverage",
+    "postinstall": "./post-install.sh",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
