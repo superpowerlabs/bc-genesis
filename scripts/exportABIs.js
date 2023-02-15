@@ -12,11 +12,9 @@ async function main() {
     let json = require(source);
     ABIs.contracts[rename || name] = json.abi;
   }
-  abi("NftFactory", "");
-  abi("WhitelistSlot", "");
-  abi("Farm", "tokens");
-  abi("Turf", "tokens");
-  abi("SeedTokenMock", "mocks");
+  abi("BCFactory", "");
+  abi("BCGenesisToken", "tokens");
+  abi("BCOracleToken", "tokens");
 
   await fs.writeFile(path.resolve(__dirname, "../export/ABIs.json"), JSON.stringify(ABIs, null, 2));
 }
