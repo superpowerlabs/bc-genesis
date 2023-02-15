@@ -68,12 +68,12 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
       revert BlockNumberNotSet();
     }
     for (uint256 i = 0; i < newBlockNumbers_.length; i++) {
-      if (newBlockNumbers_[i] <= _blockRanges[_lastBlockNumberId].closingBlockNumber) {
+      if (newBlockNumbers_[i] <= _blockRanges[_lastBlockNumberId-1].closingBlockNumber) {
         revert BlockNumbersOutOfOrder();
       }
       if (i == 0) {
-        _blockRanges[_lastBlockNumberId + i].startingBlockNumber =
-          uint32(_blockRanges[_lastBlockNumberId].closingBlockNumber) +
+        _blockRanges[_lastBlockNumberId].startingBlockNumber =
+          uint32(_blockRanges[_lastBlockNumberId-1].closingBlockNumber) +
           1;
       } else {
         _blockRanges[_lastBlockNumberId + i].startingBlockNumber = uint32(newBlockNumbers_[i - 1]) + 1;
@@ -85,7 +85,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
 
   function getClosingBlockNumberIds() external view override returns (uint256[] memory) {
     uint256[] memory blockNumberIds = new uint256[](_lastBlockNumberId);
-    for (uint256 i = 0; i <= _lastBlockNumberId; i++) {
+    for (uint256 i = 0; i < _lastBlockNumberId; i++) {
       blockNumberIds[i] = _blockRanges[i].closingBlockNumber;
     }
     return blockNumberIds;
@@ -119,7 +119,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
     }
     for (uint256 i = 0; i <= _lastBlockNumberId; i++) {
       if (blockNumber_ >= _blockRanges[i].startingBlockNumber &&
-        block.number <= _blockRanges[i].closingBlockNumber) {
+        blockNumber_ <= _blockRanges[i].closingBlockNumber) {
         return (i, true);
       }
     }
