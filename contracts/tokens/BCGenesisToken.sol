@@ -58,7 +58,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
         _blockRanges[i - 1].closingBlockNumber = uint32(blockNumbers_[i]);
       }
     }
-    _lastBlockNumberId = blockNumbers_.length - 1;
+    _lastBlockNumberId = blockNumbers_.length - 2;
   }
 
   // Add a list of block numbers that will be used to get info about intervals
@@ -68,17 +68,17 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
       revert BlockNumberNotSet();
     }
     for (uint256 i = 0; i < newBlockNumbers_.length; i++) {
-      if (newBlockNumbers_[i] <= _blockRanges[_lastBlockNumberId].closingBlockNumber) {
+      if (newBlockNumbers_[i] <= _blockRanges[_lastBlockNumberId + i].closingBlockNumber) {
         revert BlockNumbersOutOfOrder();
       }
       if (i == 0) {
-        _blockRanges[_lastBlockNumberId + i].startingBlockNumber =
+        _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber =
           uint32(_blockRanges[_lastBlockNumberId].closingBlockNumber) +
           1;
       } else {
-        _blockRanges[_lastBlockNumberId + i].startingBlockNumber = uint32(newBlockNumbers_[i - 1]) + 1;
+        _blockRanges[_lastBlockNumberId + i + 1].startingBlockNumber = uint32(newBlockNumbers_[i - 1]) + 1;
       }
-      _blockRanges[_lastBlockNumberId + i].closingBlockNumber = uint32(newBlockNumbers_[i]);
+      _blockRanges[_lastBlockNumberId + i + 1].closingBlockNumber = uint32(newBlockNumbers_[i]);
     }
     _lastBlockNumberId = _lastBlockNumberId + newBlockNumbers_.length;
   }
@@ -118,8 +118,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
       blockNumber_ = block.number;
     }
     for (uint256 i = 0; i <= _lastBlockNumberId; i++) {
-      if (blockNumber_ >= _blockRanges[i].startingBlockNumber &&
-        block.number <= _blockRanges[i].closingBlockNumber) {
+      if (blockNumber_ >= _blockRanges[i].startingBlockNumber && block.number <= _blockRanges[i].closingBlockNumber) {
         return (i, true);
       }
     }
