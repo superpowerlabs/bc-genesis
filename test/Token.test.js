@@ -1,8 +1,6 @@
 const {expect} = require("chai");
 const {initEthers, assertThrowsMessage, getBlockNumber,increaseBlockTimestampBy} = require("./helpers");
 
-
-
 describe("GenesisToken", function () {
   let GenesisToken, bodyPart;
   let OracleToken, robot;
@@ -27,7 +25,7 @@ describe("GenesisToken", function () {
     bodyPart = await upgrades.deployProxy(GenesisToken, ["https://s3.Byte.City/BodyPart/"]);
     await bodyPart.deployed();
     const blockNumber = await getBlockNumber();
-    await bodyPart.setBlockNumbers([blockNumber, blockNumber + 100, blockNumber + 200, blockNumber + 300])
+    await bodyPart.setBlockNumbers([blockNumber, blockNumber + 100, blockNumber + 200, blockNumber + 300, blockNumber + 400])
 
     robot = await upgrades.deployProxy(OracleToken, ["https://s3.Byte.City/Robot/"]);
     await robot.deployed();
@@ -152,6 +150,7 @@ describe("GenesisToken", function () {
 
         await assertThrowsMessage(factory.burnBatch([1,2]), "missing argument: coder array tokenIds");
       });
+  
 
       it("should Decay Supply", async function () {
         await mock.setFactory(factory.address, true);
@@ -181,6 +180,47 @@ describe("GenesisToken", function () {
         expect(await mock.maxSupply()).equal(0)
 
       });
+
+      it.only("Test Range flow", async function () {
+        await bodyPart.setFactory(factory.address, true);
+        blockNumber = await getBlockNumber();
+        await bodyPart.setParameters(blockNumber + 1, 100);
+        await factory.initialize(bodyPart.address, robot.address)
+
+        console.log(await bodyPart.getClosingBlockNumberIds())
+
+        const [a,b,c,d]= await bodyPart.getClosingBlockNumberIds()
+        expect(a).equal(102)
+        expect(b).equal(202)
+        expect(c).equal(302)
+        expect(d).equal(402)
+
+        expect(bodyPart.getBlockRangeByBlockNumberId(6)).revertedWith("BlockNumberOutOfRange")
+
+        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[0]).equal(3)
+        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[1]).equal(102)
+
+        await factory.mintGenesis(holder.address)
+        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[3]).equal(1)
+
+        for(let i= 0; i<100; i++)
+         {         
+           await increaseBlockTimestampBy(1)
+         }
+        await factory.mintGenesis(holder.address)
+
+        expect((await bodyPart.getBlockRangeByBlockNumberId(1))[2]).equal(2)
+        expect((await bodyPart.getBlockRangeByBlockNumberId(1))[3]).equal(1)
+
+        for(let i= 0; i<500; i++)
+        {         
+          await increaseBlockTimestampBy(1)
+        }
+        await expect(factory.mintGenesis(holder.address)).revertedWith("BlockNumberOutOfRange")
+
+        console.log(await bodyPart.getBlockRangeByBlockNumberId(2))
+      });
+
 
   });
 });

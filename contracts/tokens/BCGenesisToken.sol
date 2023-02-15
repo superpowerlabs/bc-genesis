@@ -85,7 +85,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
 
   function getClosingBlockNumberIds() external view override returns (uint256[] memory) {
     uint256[] memory blockNumberIds = new uint256[](_lastBlockNumberId);
-    for (uint256 i = 0; i <= _lastBlockNumberId; i++) {
+    for (uint256 i = 0; i < _lastBlockNumberId; i++) {
       blockNumberIds[i] = _blockRanges[i].closingBlockNumber;
     }
     return blockNumberIds;
