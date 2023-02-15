@@ -58,7 +58,7 @@ contract BCGenesisToken is BCNFT, IBCToken, IRevealable {
         _blockRanges[i - 1].closingBlockNumber = uint32(blockNumbers_[i]);
       }
     }
-    _lastBlockNumberId = blockNumbers_.length - 1;
+    _lastBlockNumberId = blockNumbers_.length - 2;
   }
 
   // Add a list of block numbers that will be used to get info about intervals
