@@ -8,6 +8,7 @@ describe("GenesisToken", function () {
   let Factory, factory;
   let owner, holder;
   let blockNumber;
+  let firstBlock;
 
 
   before(async function () {
@@ -25,6 +26,7 @@ describe("GenesisToken", function () {
     bodyPart = await upgrades.deployProxy(GenesisToken, ["https://s3.Byte.City/BodyPart/"]);
     await bodyPart.deployed();
     const blockNumber = await getBlockNumber();
+    firstBlock = blockNumber
     await bodyPart.setBlockNumbers([blockNumber, blockNumber + 100, blockNumber + 200, blockNumber + 300, blockNumber + 400])
 
     robot = await upgrades.deployProxy(OracleToken, ["https://s3.Byte.City/Robot/"]);
@@ -180,25 +182,35 @@ describe("GenesisToken", function () {
         expect(await mock.maxSupply()).equal(0)
 
       });
+      
 
-      it.only("Test Range flow", async function () {
+  });
+
+  describe("Range Flow Testing", async function () {
+    beforeEach(async function () {
+      await initAndDeploy();
+    });
+
+      it("Test Range flow", async function () {
+        tester = await bodyPart.findBlockIdByBlockNumber(0)
+        expect(tester[0]).equal(0)
+        expect(tester[1]).equal(true)
+
         await bodyPart.setFactory(factory.address, true);
         blockNumber = await getBlockNumber();
         await bodyPart.setParameters(blockNumber + 1, 100);
         await factory.initialize(bodyPart.address, robot.address)
 
-        console.log(await bodyPart.getClosingBlockNumberIds())
-
         const [a,b,c,d]= await bodyPart.getClosingBlockNumberIds()
-        expect(a).equal(102)
-        expect(b).equal(202)
-        expect(c).equal(302)
-        expect(d).equal(402)
+        expect(a).equal(firstBlock + 100)
+        expect(b).equal(firstBlock + 200)
+        expect(c).equal(firstBlock + 300)
+        expect(d).equal(firstBlock+ 400)
 
         expect(bodyPart.getBlockRangeByBlockNumberId(6)).revertedWith("BlockNumberOutOfRange")
 
-        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[0]).equal(3)
-        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[1]).equal(102)
+        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[0]).equal(firstBlock+1)
+        expect((await bodyPart.getBlockRangeByBlockNumberId(0))[1]).equal(firstBlock+ 100)
 
         await factory.mintGenesis(holder.address)
         expect((await bodyPart.getBlockRangeByBlockNumberId(0))[3]).equal(1)
@@ -207,6 +219,11 @@ describe("GenesisToken", function () {
          {         
            await increaseBlockTimestampBy(1)
          }
+         
+         tester = await bodyPart.findBlockIdByBlockNumber(0)
+         expect(tester[0]).equal(1)
+         expect(tester[1]).equal(true)
+ 
         await factory.mintGenesis(holder.address)
 
         expect((await bodyPart.getBlockRangeByBlockNumberId(1))[2]).equal(2)
@@ -218,9 +235,90 @@ describe("GenesisToken", function () {
         }
         await expect(factory.mintGenesis(holder.address)).revertedWith("BlockNumberOutOfRange")
 
-        console.log(await bodyPart.getBlockRangeByBlockNumberId(2))
+      });
+
+      it("Test findBlockIdByBlockNumber", async function () {
+        let startingBlock = await getBlockNumber()
+        let tester 
+
+        tester = await bodyPart.findBlockIdByBlockNumber(startingBlock)
+        expect(tester[0]).equal(0)
+        expect(tester[1]).equal(true)
+
+        tester = await bodyPart.findBlockIdByBlockNumber(startingBlock+ 100)
+        expect(tester[0]).equal(1)
+        expect(tester[1]).equal(true)
+
+        tester = await bodyPart.findBlockIdByBlockNumber(startingBlock + 500)
+        expect(tester[1]).equal(false)
+
+
+        for(let i= 0; i<100; i++)
+        {         
+          await increaseBlockTimestampBy(1)
+        }
+
+        tester = await bodyPart.findBlockIdByBlockNumber(0)
+        expect(tester[0]).equal(1)
+        expect(tester[1]).equal(true)
+
+        for(let i= 0; i<200; i++)
+        {         
+          await increaseBlockTimestampBy(1)
+        }
+
+        tester = await bodyPart.findBlockIdByBlockNumber(0)
+        expect(tester[0]).equal(3)
+        expect(tester[1]).equal(true)
+
+  
+        for(let i= 0; i<100; i++)
+        {         
+          await increaseBlockTimestampBy(1)
+        }
+
+        tester = await bodyPart.findBlockIdByBlockNumber(0)
+        expect(tester[0]).equal(0)
+        expect(tester[1]).equal(false)
+        
+      });
+
+      it("Verify addBlockNumbers Flow", async function () {
+        let tester 
+        let startingBlock = await getBlockNumber()
+
+        await expect(bodyPart.addBlockNumbers([1,5])).revertedWith("BlockNumbersOutOfOrder")
+
+        expect((await bodyPart.getClosingBlockNumberIds()).length).equal(4)
+
+        await bodyPart.addBlockNumbers([startingBlock+ 500, startingBlock + 600])
+
+        expect((await bodyPart.getClosingBlockNumberIds()).length).equal(6)
+
+        tester = await bodyPart.getBlockRangeByBlockNumberId(4)
+        let tester2 = await bodyPart.getBlockRangeByBlockNumberId(3)
+        expect(tester[0]).equal( tester2[1].toNumber() + 1 )
+
       });
 
 
+      it("Verify preSet Flow", async function () {
+        let startingBlock = await getBlockNumber()
+
+        await expect(bodyPart.setBlockNumbers([startingBlock, startingBlock + 100])
+        ).revertedWith("BlockNumbersAlreadySet")
+        
+        let bodyPart2 = await upgrades.deployProxy(GenesisToken, ["https://s3.Byte.City/BodyPart/"]);
+        await bodyPart2.deployed();
+
+        await expect(bodyPart2.addBlockNumbers([1,5])).revertedWith("BlockNumberNotSet")
+
+        await expect(bodyPart2.setBlockNumbers([3,2,1])).revertedWith("BlockNumbersOutOfOrder")   
+
+      });
+
+
+
   });
+  
 });
