@@ -1,4 +1,6 @@
 const {assert} = require("chai");
+const {toChecksumAddress} = require("ethereumjs-util");
+const proofs = require("./fixtures/proofs.json");
 
 const Helpers = {
   initEthers(ethers) {
@@ -70,6 +72,18 @@ const Helpers = {
     await this.ethers.provider.send("evm_increaseTime", [offset]);
     await this.ethers.provider.send("evm_mine");
   },
+
+  getRoot() {
+    return "0x" + proofs.root;
+  },
+
+  getProof(wallet) {
+    for (let child of proofs.children) {
+      if (child.wallet === toChecksumAddress(wallet)) {
+        return child.proof;
+      }
+    }
+  }
 };
 
 module.exports = Helpers;

@@ -11,26 +11,36 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
-import "./utils/Signable.sol";
 
 //import "hardhat/console.sol";
 
-contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
+contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
   using SafeMathUpgradeable for uint256;
 
   event OracleMinted(uint256 id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
+  event AllowListMintingFinished();
+  event RootSet(bytes32 root);
 
   error NotAndERC721(address);
   error InvalidSignature();
   error SignatureAlreadyUsed();
   error NotGenesisOwner();
+  error OracleMintingFinished();
+  error RootNotSet();
+  error RootAlreadySet();
+  error InvalidProof();
+  error AllowListFinished();
 
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
+
+  bytes32 public root;
+  bool public allowListMintingFinished;
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -43,12 +53,26 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
-  function setValidator(uint256 id, address validator) public override onlyOwner {
-    super.setValidator(id, validator);
+  function setRoot(bytes32 root_) external onlyOwner {
+    // allows to update the root, if no genesis has been minted yet
+    if (genesisToken.totalSupply() > 0) revert RootAlreadySet();
+    root = root_;
+    emit RootSet(root_);
   }
 
-  function mintGenesis(uint256 randomValue, bytes calldata signature) external {
-    if (!isSignedByValidator(0, hashGenesis(_msgSender(), randomValue), signature)) revert InvalidSignature();
+  function finishAllowListMinting() external onlyOwner {
+    allowListMintingFinished = true;
+    emit AllowListMintingFinished();
+  }
+
+  function encodeLeaf(address recipient) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked(recipient));
+  }
+
+  function mintGenesis(bytes32[] calldata proof) external {
+    if (root == 0) revert RootNotSet();
+    if (allowListMintingFinished) revert AllowListFinished();
+    if (!MerkleProof.verify(proof, root, encodeLeaf(_msgSender()))) revert InvalidProof();
     genesisToken.mint(_msgSender());
   }
 
@@ -56,12 +80,9 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 partId1,
     uint256 partId2,
     uint256 partId3,
-    uint256 partId4,
-    uint256 randomValue,
-    bytes calldata signature
+    uint256 partId4
   ) external {
-    if (!isSignedByValidator(0, hashOracle(_msgSender(), partId1, partId2, partId3, partId4, randomValue), signature))
-      revert InvalidSignature();
+    if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
     if (
       genesisToken.ownerOf(partId1) != _msgSender() ||
       genesisToken.ownerOf(partId2) != _msgSender() ||
@@ -76,40 +97,5 @@ contract BCFactory is Signable, OwnableUpgradeable, UUPSUpgradeable {
     parts[3] = partId4;
     genesisToken.burnBatch(parts);
     emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
-  }
-
-  function hashGenesis(address to, uint256 randomValue) public view returns (bytes32) {
-    return
-      keccak256(
-        abi.encodePacked(
-          "\x19\x01", // EIP-191
-          block.chainid,
-          to,
-          randomValue
-        )
-      );
-  }
-
-  function hashOracle(
-    address to,
-    uint256 partId1,
-    uint256 partId2,
-    uint256 partId3,
-    uint256 partId4,
-    uint256 randomValue
-  ) public view returns (bytes32) {
-    return
-      keccak256(
-        abi.encodePacked(
-          "\x19\x01", // EIP-191
-          block.chainid,
-          to,
-          partId1,
-          partId2,
-          partId3,
-          partId4,
-          randomValue
-        )
-      );
   }
 }

@@ -40,5 +40,11 @@
   },
   "lint-staged": {
     "*.js": "prettier --write"
+  },
+  "dependencies": {
+    "ethereumjs-util": "^7.1.5",
+    "fs-extra": "^11.1.0",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.3.9"
   }
 }
