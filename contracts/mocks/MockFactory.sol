@@ -13,7 +13,7 @@ contract MockFactory {
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
 
-  function initialize(address genesis_, address oracle_) public {
+  constructor(address genesis_, address oracle_) {
     genesisToken = BCGenesisToken(genesis_);
     oracleToken = BCOracleToken(oracle_);
   }

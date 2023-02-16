@@ -1,5 +1,5 @@
 const {MerkleTree} = require("merkletreejs");
-const {toChecksumAddress} = require("ethereumjs-util");
+const ethers = require("ethers");
 const keccak256 = require("keccak256");
 const path = require("path");
 const fs = require("fs-extra");
@@ -8,7 +8,8 @@ const winners = require("../data/raffleWinners");
 
 const data = [];
 for (let winner of winners) {
-  data.push(winner.wallet + winner.tokenId);
+  const myBytes32 = ethers.utils.defaultAbiCoder.encode(["uint256"], [winner.tokenId]);
+  data.push(`${winner.wallet}${myBytes32.substring(2)}`);
 }
 
 const leaves = data.map((e) => keccak256(e));

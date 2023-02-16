@@ -6,6 +6,8 @@ pragma solidity 0.8.17;
 
 import "./BCNFT.sol";
 
+import "hardhat/console.sol";
+
 contract BCGenesisToken is BCNFT {
   error OutOfBounds();
 

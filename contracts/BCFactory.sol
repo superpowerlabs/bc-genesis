@@ -70,8 +70,6 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function mintGenesis(uint256 tokenId, bytes32[] calldata proof) external {
-    console.log(tokenId);
-    console.log(_msgSender());
     if (merkleRoot == 0) revert RootNotSet();
     if (allowListMintingFinished) revert AllowListFinished();
     if (!MerkleProofUpgradeable.verify(proof, merkleRoot, _encodeLeaf(_msgSender(), tokenId))) revert InvalidProof();
@@ -103,14 +101,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     _validateBodyParts(partId1, partId2, partId3, partId4);
     uint256 oracleId = oracleToken.mint(_msgSender());
     uint256[] memory parts = new uint256[](4);
-    // the following assignment saves gas
-    // solhint-disable-next-line no-inline-assembly
-    assembly {
-      mstore(parts, partId1)
-      mstore(add(parts, 32), partId2)
-      mstore(add(parts, 64), partId3)
-      mstore(add(parts, 96), partId4)
-    }
+    parts[0] = partId1;
+    parts[1] = partId2;
+    parts[2] = partId3;
+    parts[3] = partId4;
     genesisToken.burnBatch(parts);
     emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
   }
