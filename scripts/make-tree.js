@@ -42,5 +42,5 @@ for (let i = 0; i < leaves.length; i++) {
 
 fs.writeFileSync(path.resolve(__dirname, "../data/rootLeavesAndProofs.json"), JSON.stringify(proofs, null, 2));
 
-// TODO when ready, just to set up the testing
-fs.writeFileSync(path.resolve(__dirname, "../test/fixtures/proofs.json"), JSON.stringify(proofs, null, 2));
+// uncomment if need to modify the fixtures
+// fs.writeFileSync(path.resolve(__dirname, "../test/fixtures/proofs.json"), JSON.stringify(proofs, null, 2));
