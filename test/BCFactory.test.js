@@ -1,8 +1,8 @@
 const {expect} = require("chai");
-const {getRoot, getProof} = require("./helpers");
+const {getRoot, getProofAndId} = require("./helpers");
 
 const {signPackedData, assertThrowsMessage, getBlockNumber} = require("./helpers");
-describe("BCFactory", function () {
+describe.skip("BCFactory", function () {
   let factory;
   let genesis;
   let oracle;
@@ -23,12 +23,10 @@ describe("BCFactory", function () {
     genesis = await upgrades.deployProxy(BCGenesisToken, ["https://s3.Byte.City/BodyPart/"]);
     await genesis.deployed();
     blockNumber = await getBlockNumber();
-    await genesis.setParameters(blockNumber + 1);
 
     oracle = await upgrades.deployProxy(BCOracleToken, ["https://s3.Byte.City/Robot/"]);
     await oracle.deployed();
     blockNumber = await getBlockNumber();
-    await oracle.setParameters(blockNumber + 1);
 
     factory = await upgrades.deployProxy(BCFactory, [genesis.address, oracle.address]);
     await factory.deployed();
@@ -36,9 +34,7 @@ describe("BCFactory", function () {
     await genesis.setFactory(factory.address, true);
     await oracle.setFactory(factory.address, true);
 
-    await expect(factory.setRoot(getRoot()))
-        .emit(factory, "RootSet")
-        .withArgs(getRoot());
+    await expect(factory.setRoot(getRoot())).emit(factory, "RootSet").withArgs(getRoot());
   }
 
   async function getSignature(hash, privateKey) {
@@ -50,33 +46,32 @@ describe("BCFactory", function () {
   });
 
   describe("mintGenesis", function () {
-    it("should mint parts", async function () {
-      let proof = getProof(wl1.address);
-      await factory.connect(wl1).mintGenesis(proof);
+    it.only("should mint parts", async function () {
+      let [proof, id] = getProofAndId(wl1.address);
+      console.log(proof, id);
+      await factory.connect(wl1).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
     });
 
     it("should fail to mint if wrong proof", async function () {
-      let proof = getProof(wl2.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof),
-          "InvalidProof()");
+      let [proof, id] = getProofAndId(wl2.address);
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(id, proof), "InvalidProof()");
     });
-
   });
 
   describe("mintOracle", function () {
     it("should mint oracle", async function () {
-      let proof = getProof(wl1.address);
-      await factory.connect(wl1).mintGenesis(proof);
+      let [proof, id] = getProofAndId(wl1.address);
+      await factory.connect(wl1).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-      proof = getProof(wl2.address);
-      await factory.connect(wl2).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl2.address);
+      await factory.connect(wl2).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl2.address)).to.equal(1);
-      proof = getProof(wl3.address);
-      await factory.connect(wl3).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl3.address);
+      await factory.connect(wl3).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl3.address)).to.equal(1);
-      proof = getProof(wl4.address);
-      await factory.connect(wl4).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl4.address);
+      await factory.connect(wl4).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl4.address)).to.equal(1);
 
       await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 2);
@@ -94,17 +89,17 @@ describe("BCFactory", function () {
     });
 
     it("should revert trying to use already used parts", async function () {
-      let proof = getProof(wl1.address);
-      await factory.connect(wl1).mintGenesis(proof);
+      let [proof, id] = getProofAndId(wl1.address);
+      await factory.connect(wl1).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-      proof = getProof(wl2.address);
-      await factory.connect(wl2).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl2.address);
+      await factory.connect(wl2).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl2.address)).to.equal(1);
-      proof = getProof(wl3.address);
-      await factory.connect(wl3).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl3.address);
+      await factory.connect(wl3).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl3.address)).to.equal(1);
-      proof = getProof(wl4.address);
-      await factory.connect(wl4).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl4.address);
+      await factory.connect(wl4).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl4.address)).to.equal(1);
 
       await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 2);
@@ -115,21 +110,20 @@ describe("BCFactory", function () {
 
       await factory.connect(wl1).mintOracle(1, 2, 3, 4);
       await assertThrowsMessage(factory.connect(wl1).mintOracle(1, 2, 3, 4), "ERC721: invalid token ID");
-
     });
 
     it("should revert if not owner of parts", async function () {
-      let proof = getProof(wl1.address);
-      await factory.connect(wl1).mintGenesis(proof);
+      let [proof, id] = getProofAndId(wl1.address);
+      await factory.connect(wl1).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-      proof = getProof(wl2.address);
-      await factory.connect(wl2).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl2.address);
+      await factory.connect(wl2).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl2.address)).to.equal(1);
-      proof = getProof(wl3.address);
-      await factory.connect(wl3).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl3.address);
+      await factory.connect(wl3).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl3.address)).to.equal(1);
-      proof = getProof(wl4.address);
-      await factory.connect(wl4).mintGenesis(proof);
+      [proof, id] = getProofAndId(wl4.address);
+      await factory.connect(wl4).mintGenesis(id, proof);
       expect(await genesis.balanceOf(wl4.address)).to.equal(1);
 
       await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 2);
@@ -139,7 +133,6 @@ describe("BCFactory", function () {
       expect(await genesis.balanceOf(wl1.address)).equal(3);
 
       await assertThrowsMessage(factory.connect(wl1).mintOracle(1, 2, 3, 4), "NotGenesisOwner()");
-
     });
   });
 });

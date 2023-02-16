@@ -4,12 +4,14 @@ pragma solidity 0.8.17;
 // Authors: Francesco Sullo <francesco@superpower.io>
 // (c) Superpower Labs Inc.
 
-import "../interfaces/IBCToken.sol";
 import "./BCNFT.sol";
 
-contract BCGenesisToken is BCNFT, IBCToken {
+contract BCGenesisToken is BCNFT {
+  error OutOfBounds();
+
   function initialize(string memory tokenUri) public initializer {
     __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
+    _maxSupply = 10000;
   }
 
   function burnBatch(uint256[] calldata tokenIds) external onlyFactory {
@@ -18,7 +20,8 @@ contract BCGenesisToken is BCNFT, IBCToken {
     }
   }
 
-  function setParameters(uint256 blockNumberOnStart_) external onlyOwner {
-    _setParameters(10000, blockNumberOnStart_, true);
+  function mint(address to, uint256 tokenId) external virtual onlyFactory {
+    if (mintEnded() || tokenId == 0 || tokenId > maxSupply()) revert OutOfBounds();
+    _safeMint(to, tokenId);
   }
 }

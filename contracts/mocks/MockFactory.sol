@@ -18,8 +18,8 @@ contract MockFactory {
     oracleToken = BCOracleToken(oracle_);
   }
 
-  function mintGenesis(address to) public {
-    genesisToken.mint(to);
+  function mintGenesis(address to, uint256 tokenId) public {
+    genesisToken.mint(to, tokenId);
   }
 
   function mintOracle(address to) public {

@@ -11,12 +11,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {MerkleProofUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
 import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
 
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
@@ -39,7 +39,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
 
-  bytes32 public root;
+  bytes32 public merkleRoot;
   bool public allowListMintingFinished;
 
   function initialize(address genesis_, address oracle_) public initializer {
@@ -56,7 +56,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   function setRoot(bytes32 root_) external onlyOwner {
     // allows to update the root, if no genesis has been minted yet
     if (genesisToken.totalSupply() > 0) revert RootAlreadySet();
-    root = root_;
+    merkleRoot = root_;
     emit RootSet(root_);
   }
 
@@ -65,15 +65,32 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     emit AllowListMintingFinished();
   }
 
-  function encodeLeaf(address recipient) public pure returns (bytes32) {
-    return keccak256(abi.encodePacked(recipient));
+  function _encodeLeaf(address recipient, uint256 tokenId) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(recipient, tokenId));
   }
 
-  function mintGenesis(bytes32[] calldata proof) external {
-    if (root == 0) revert RootNotSet();
+  function mintGenesis(uint256 tokenId, bytes32[] calldata proof) external {
+    console.log(tokenId);
+    console.log(_msgSender());
+    if (merkleRoot == 0) revert RootNotSet();
     if (allowListMintingFinished) revert AllowListFinished();
-    if (!MerkleProof.verify(proof, root, encodeLeaf(_msgSender()))) revert InvalidProof();
-    genesisToken.mint(_msgSender());
+    if (!MerkleProofUpgradeable.verify(proof, merkleRoot, _encodeLeaf(_msgSender(), tokenId))) revert InvalidProof();
+    genesisToken.mint(_msgSender(), tokenId);
+  }
+
+  function _validateBodyParts(
+    uint256 partId1,
+    uint256 partId2,
+    uint256 partId3,
+    uint256 partId4
+  ) internal view {
+    if (
+      genesisToken.ownerOf(partId1) != _msgSender() ||
+      genesisToken.ownerOf(partId2) != _msgSender() ||
+      genesisToken.ownerOf(partId3) != _msgSender() ||
+      genesisToken.ownerOf(partId4) != _msgSender()
+    ) revert NotGenesisOwner();
+    // TODO add consistency check for body parts
   }
 
   function mintOracle(
@@ -83,18 +100,17 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     uint256 partId4
   ) external {
     if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
-    if (
-      genesisToken.ownerOf(partId1) != _msgSender() ||
-      genesisToken.ownerOf(partId2) != _msgSender() ||
-      genesisToken.ownerOf(partId3) != _msgSender() ||
-      genesisToken.ownerOf(partId4) != _msgSender()
-    ) revert NotGenesisOwner();
+    _validateBodyParts(partId1, partId2, partId3, partId4);
     uint256 oracleId = oracleToken.mint(_msgSender());
     uint256[] memory parts = new uint256[](4);
-    parts[0] = partId1;
-    parts[1] = partId2;
-    parts[2] = partId3;
-    parts[3] = partId4;
+    // the following assignment saves gas
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      mstore(parts, partId1)
+      mstore(add(parts, 32), partId2)
+      mstore(add(parts, 64), partId3)
+      mstore(add(parts, 96), partId4)
+    }
     genesisToken.burnBatch(parts);
     emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
   }

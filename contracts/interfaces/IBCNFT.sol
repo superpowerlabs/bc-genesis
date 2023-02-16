@@ -7,13 +7,9 @@ pragma solidity 0.8.17;
 interface IBCNFT {
   function setFactory(address factory_, bool enabled) external;
 
-  function mint(address to) external returns (uint256);
-
   function endMinting() external;
 
   function mintEnded() external view returns (bool);
 
   function maxSupply() external view returns (uint256);
-
-  function nextTokenId() external view returns (uint256);
 }

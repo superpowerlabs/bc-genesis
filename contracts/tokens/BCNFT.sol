@@ -17,30 +17,14 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error InvalidStart();
 
   using AddressUpgradeable for address;
-  uint256 private _nextTokenId;
-  uint256 private _initialMaxSupply;
-  uint256 private _blockNumberOnStart;
+  uint256 internal _maxSupply;
   bool private _mintEnded;
-  bool private _decayActive;
 
   address[] public factories;
 
   modifier onlyFactory() {
     if (!isFactory(_msgSender())) revert Forbidden();
     _;
-  }
-
-  function _setParameters(
-    uint256 maxSupply_,
-    uint256 blockNumberOnStart_,
-    bool activateDecay
-  ) internal {
-    if (_initialMaxSupply > 0) revert ParametersAlreadySetUp();
-    if (blockNumberOnStart_ < block.number) revert InvalidStart();
-    _blockNumberOnStart = blockNumberOnStart_;
-    _nextTokenId = 1;
-    _initialMaxSupply = maxSupply_;
-    _decayActive = activateDecay;
   }
 
   function setFactory(address factory_, bool enabled) external override onlyOwner {
@@ -80,35 +64,20 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
     return false;
   }
 
-  function mint(address to) external virtual override onlyFactory returns (uint256) {
-    if (_nextTokenId == 0 || _nextTokenId > maxSupply()) revert CannotMint();
-    _safeMint(to, _nextTokenId);
-    return _nextTokenId++;
-  }
-
   function endMinting() external override onlyOwner {
+    // force the end of the minting
     _mintEnded = true;
   }
 
-  function mintEnded() external view override returns (bool) {
+  function mintEnded() public view override returns (bool) {
     return _mintEnded;
   }
 
   function maxSupply() public view override returns (uint256) {
     if (_mintEnded) {
       return totalSupply();
-    } else if (_decayActive) {
-      //TODO: Define Proper Decay Factor
-      if ((block.number - _blockNumberOnStart) / 100 > _initialMaxSupply) {
-        return 0;
-      }
-      return _initialMaxSupply - ((block.number - _blockNumberOnStart) / 100);
     } else {
-      return _initialMaxSupply;
+      return _maxSupply;
     }
-  }
-
-  function nextTokenId() external view override returns (uint256) {
-    return _nextTokenId;
   }
 }
