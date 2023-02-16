@@ -13,20 +13,20 @@ contract MockFactory {
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
 
-  function initialize(address genesis_, address oracle_) public {
+  constructor(address genesis_, address oracle_) {
     genesisToken = BCGenesisToken(genesis_);
     oracleToken = BCOracleToken(oracle_);
   }
 
-  function mintGenesis(address to) public {
-    genesisToken.mint(to);
+  function mintGenesis(address to, uint256 tokenId) public {
+    genesisToken.mint(to, tokenId);
   }
 
   function mintOracle(address to) public {
     oracleToken.mint(to);
   }
 
-  function burnBatch(uint256[4] calldata tokenIds) public {
+  function burnBatch(uint256[] calldata tokenIds) public {
     genesisToken.burnBatch(tokenIds);
   }
 

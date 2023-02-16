@@ -9,7 +9,6 @@ describe("Integration test", function () {
 
   before(async function () {
     [owner, holder1, holder2, holder3] = await ethers.getSigners();
-
   });
 
   beforeEach(async function () {});

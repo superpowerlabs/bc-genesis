@@ -77,13 +77,13 @@ const Helpers = {
     return "0x" + proofs.root;
   },
 
-  getProof(wallet) {
+  getProofAndId(wallet) {
     for (let child of proofs.children) {
-      if (child.wallet === toChecksumAddress(wallet)) {
-        return child.proof;
+      if (child.winner.wallet === toChecksumAddress(wallet)) {
+        return [child.proof, child.winner.tokenId];
       }
     }
-  }
+  },
 };
 
 module.exports = Helpers;
