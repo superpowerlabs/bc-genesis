@@ -16,7 +16,7 @@ contract BCGenesisToken is BCNFT {
     _maxSupply = 10000;
   }
 
-  function burnBatch(uint256[] calldata tokenIds) external onlyFactory {
+  function burnBatch(uint256[4] calldata tokenIds) external onlyFactory {
     for (uint256 i = 0; i < tokenIds.length; i++) {
       _burn(tokenIds[i]);
     }

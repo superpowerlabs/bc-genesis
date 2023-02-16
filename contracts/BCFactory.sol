@@ -100,12 +100,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
     _validateBodyParts(partId1, partId2, partId3, partId4);
     uint256 oracleId = oracleToken.mint(_msgSender());
-    uint256[] memory parts = new uint256[](4);
-    parts[0] = partId1;
-    parts[1] = partId2;
-    parts[2] = partId3;
-    parts[3] = partId4;
-    genesisToken.burnBatch(parts);
+    genesisToken.burnBatch([partId1, partId2, partId3, partId4]);
     emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
   }
 }
