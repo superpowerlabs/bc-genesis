@@ -10,8 +10,6 @@ const data = [];
 for (let winner of winners) {
   data.push(winner.wallet + winner.tokenId);
 }
-// console.log(data);
-// data.sort()
 
 const leaves = data.map((e) => keccak256(e));
 
