@@ -8,7 +8,7 @@ const hre = require("hardhat");
 
 const ethers = hre.ethers;
 const deployed = require("../export/deployed.json");
-const DeployUtils = require("../lib/DeployUtils");
+const DeployUtils = require("./lib/DeployUtils");
 let deployUtils;
 
 async function main() {
