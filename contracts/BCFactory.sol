@@ -16,7 +16,7 @@ import {MerkleProofUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/
 import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
 
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;

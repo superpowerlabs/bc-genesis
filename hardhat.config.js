@@ -1,6 +1,21 @@
+const {requirePath} = require("require-or-mock");
+// if missed, it sets up a mock
+requirePath(".env");
+requirePath("export/deployed.json");
+
+require("dotenv").config();
+require("cryptoenv").parse(() => process.env.NODE_ENV !== "test");
+
 require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
+require("hardhat-contract-sizer");
 require("solidity-coverage");
+const requireOrMock = require("require-or-mock");
+
+if (process.env.GAS_REPORT === "yes") {
+  require("hardhat-gas-reporter");
+}
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -34,6 +49,30 @@ module.exports = {
     },
     localhost: {
       url: "http://localhost:8545",
+      chainId: 1337,
     },
+    ethereum: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: [process.env.FOR_MAINNET],
+      chainId: 1,
+    },
+    fuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      gasPrice: 225000000000,
+      chainId: 43113,
+      accounts: [process.env.FOR_TESTNET],
+    },
+    alfajores: {
+      url: "https://alfajores-forno.celo-testnet.org",
+      accounts: [process.env.FOR_TESTNET],
+      chainId: 44787,
+    },
+  },
+  etherscan: {
+    apiKey: process.env.BSCSCAN_KEY,
+  },
+  gasReporter: {
+    currency: "USD",
+    // coinmarketcap: env.coinMarketCapAPIKey
   },
 };
