@@ -35,6 +35,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   error RootAlreadySet();
   error InvalidProof();
   error AllowListFinished();
+  error NotSameRarity();
+  error TooManyValues();
+  error InvalidRarity();
+  error NotAFullSet();
 
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
@@ -42,6 +46,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   bytes32 public merkleRoot;
   bool public allowListMintingFinished;
   uint private _rangeSize;
+  uint[] private _rarityIndex;
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -67,6 +72,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     emit AllowListMintingFinished();
   }
 
+  function genesisMintEnded() public view returns (bool) {
+    return allowListMintingFinished || genesisToken.totalSupply() > 5599;
+  }
+
   function _encodeLeaf(address recipient, uint256 tokenId) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(recipient, tokenId));
   }
@@ -78,19 +87,13 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     genesisToken.mint(_msgSender(), tokenId);
   }
 
-  function _reverseTransform(uint y) internal pure returns (uint) {
-    uint base = (y / rangeSize) * rangeSize;
-    uint mod = ((y - 1) % rangeSize) + 10;
-    uint ones = mod / 10;
-    uint tens = mod % 10;
-    uint r = base + ones + (tens * 4);
-    if (r % rangeSize == 0) {
-      r -= rangeSize;
+  function saveRarityIndex(uint256[] memory rarityIndex_) public onlyOwner {
+    for (uint256 i = 0; i < rarityIndex_.length; i++) {
+      _rarityIndex[i] = rarityIndex_[i];
     }
-    return r;
   }
 
-  function _encode(uint256[] memory arr) internal pure returns (uint256) {
+  function encode(uint256[] memory arr) external pure returns (uint256) {
     uint256 res;
     if (arr.length > 77) revert TooManyValues();
     for (uint256 i = 0; i < arr.length; i++) {
@@ -105,32 +108,33 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     return val % 10;
   }
 
-  function _rarityByIndex(uint256 index_) internal view returns (uint256) {
-    uint256 elem = _rarityIndex[index_ / (rangeSize * 77)];
-    uint256 onElem = index_ % (rangeSize * 77);
-    uint256 remainder = onElem / rangeSize;
-    return decode(elem, remainder);
+  function _rarity(uint256 partId) internal view returns (uint256) {
+    uint256 elem = _rarityIndex[partId / (_rangeSize * 77)];
+    uint256 onElem = partId % (_rangeSize * 77);
+    uint256 remainder = onElem / _rangeSize;
+    return _decode(elem, remainder);
   }
 
-  function _revert(uint y) internal pure returns (uint) {
+  function _revert(uint partId) internal view returns (uint) {
     uint factor = 13;
     uint addend = 17;
-    uint base = (y - 1) / rangeSize;
-    uint diff = base * rangeSize;
-    y = y - diff;
+    uint base = (partId - 1) / _rangeSize;
+    uint diff = base * _rangeSize;
+    partId = partId - diff;
     uint factorInverse = 1;
-    for (uint i = 1; i <= rangeSize; i++) {
-      if ((factor * i) % rangeSize == 1) {
+    for (uint i = 1; i <= _rangeSize; i++) {
+      if ((factor * i) % _rangeSize == 1) {
         factorInverse = i;
         break;
       }
     }
-    return diff + ((((y - 1 + rangeSize - addend) % rangeSize) * factorInverse) % rangeSize) + 1;
+    return diff + ((((partId - 1 + _rangeSize - addend) % _rangeSize) * factorInverse) % _rangeSize) + 1;
   }
 
-  function _getPart(uint partId) internal pure returns (uint) {
-    uint reverted = _reverseTransform(_revert(row.tokenId));
-    return ((reverted - 1) % 4) ** 2;
+  function _part(uint partId) internal view returns (uint) {
+    uint reverted = _revert(partId);
+    uint extra = (reverted - 1) % _rangeSize;
+    return (extra / 10) ** 2;
   }
 
   function _validateBodyParts(
@@ -145,8 +149,12 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
       genesisToken.ownerOf(partId3) != _msgSender() ||
       genesisToken.ownerOf(partId4) != _msgSender()
     ) revert NotGenesisOwner();
-    if (_part(id1) + _part(id2) + _part(id3) + _part(id4) != 14) {
+    if (_part(partId1) + _part(partId2) + _part(partId3) + _part(partId4) != 14) {
       revert NotAFullSet();
+    }
+    uint a = _rarity(partId1);
+    if (a != _rarity(partId2) || a != _rarity(partId3) || a != _rarity(partId4)) {
+      revert NotSameRarity();
     }
   }
 
