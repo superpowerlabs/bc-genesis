@@ -14,7 +14,7 @@ async function main() {
   const chainId = await deployUtils.currentChainId();
   let [deployer] = await ethers.getSigners();
 
-  const network = chainId === 1 ? "ethereum" : chainId === 44787 ? "alfajores" : "localhost";
+  const network = chainId === 1 ? "ethereum" : chainId === 5 ? "goerli" : chainId === 44787 ? "alfajores" : "localhost";
   console.log("Updating root in factory with:", deployer.address, "on", network);
 
   const factory = await deployUtils.attach("BCFactory");
