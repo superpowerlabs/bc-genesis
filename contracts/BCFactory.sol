@@ -35,12 +35,13 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   error RootAlreadySet();
   error InvalidProof();
   error AllowListFinished();
+  error GenesisMintingNotEnded();
 
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
 
   bytes32 public merkleRoot;
-  bool public allowListMintingFinished;
+  bool public oracleMintingStarted;
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -60,20 +61,19 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     emit RootSet(root_);
   }
 
-  function finishAllowListMinting() external onlyOwner {
-    allowListMintingFinished = true;
-    emit AllowListMintingFinished();
-  }
-
   function _encodeLeaf(address recipient, uint256 tokenId) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(recipient, tokenId));
   }
 
   function mintGenesis(uint256 tokenId, bytes32[] calldata proof) external {
+    if (!genesisToken.canMint()) revert AllowListFinished();
     if (merkleRoot == 0) revert RootNotSet();
-    if (allowListMintingFinished) revert AllowListFinished();
     if (!MerkleProofUpgradeable.verify(proof, merkleRoot, _encodeLeaf(_msgSender(), tokenId))) revert InvalidProof();
     genesisToken.mint(_msgSender(), tokenId);
+  }
+
+  function startOracleMinting() external onlyOwner {
+    oracleMintingStarted = true;
   }
 
   function _validateBodyParts(
@@ -88,7 +88,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
       genesisToken.ownerOf(partId3) != _msgSender() ||
       genesisToken.ownerOf(partId4) != _msgSender()
     ) revert NotGenesisOwner();
-    // TODO add consistency check for body parts in a following upgrade, when the body parts are defined
+    // consistency check for body parts will be set in a following upgrade, when the body parts are defined
   }
 
   function mintOracle(
@@ -97,6 +97,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     uint256 partId3,
     uint256 partId4
   ) external {
+    if (genesisToken.canMint()) revert GenesisMintingNotEnded();
     if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
     _validateBodyParts(partId1, partId2, partId3, partId4);
     uint256 oracleId = oracleToken.mint(_msgSender());

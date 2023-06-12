@@ -10,6 +10,8 @@ import "./BCNFTBase.sol";
 import "../interfaces/IBCNFT.sol";
 
 abstract contract BCNFT is IBCNFT, BCNFTBase {
+  event MintingEnded();
+
   error Forbidden();
   error CannotMint();
   error ZeroAddress();
@@ -67,6 +69,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   function endMinting() external override onlyOwner {
     // force the end of the minting
     _mintEnded = true;
+    emit MintingEnded();
   }
 
   function mintEnded() public view override returns (bool) {
@@ -79,6 +82,10 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
     } else {
       return _maxSupply;
     }
+  }
+
+  function canMint() public view returns (bool) {
+    return !mintEnded() && totalSupply() < maxSupply();
   }
 
 }

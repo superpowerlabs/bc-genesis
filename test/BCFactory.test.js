@@ -84,6 +84,10 @@ describe("BCFactory", function () {
 
       expect(await genesis.balanceOf(wl1.address)).equal(4);
 
+      await expect(factory.connect(wl1).mintOracle(id1, id2, id3, id4)).revertedWith("GenesisMintingNotEnded()")
+
+      await genesis.endMinting();
+
       const mintedOracle = await factory.connect(wl1).mintOracle(id1, id2, id3, id4);
       await expect(mintedOracle).to.emit(factory, "OracleMinted").withArgs(1, id1, id2, id3, id4);
       expect(mintedOracle.hash).to.exist;
@@ -116,6 +120,8 @@ describe("BCFactory", function () {
 
       expect(await genesis.balanceOf(wl1.address)).equal(4);
 
+      await genesis.endMinting();
+
       await factory.connect(wl1).mintOracle(id1, id2, id3, id4);
       await assertThrowsMessage(factory.connect(wl1).mintOracle(id1, id2, id3, id4), "ERC721: invalid token ID");
     });
@@ -142,6 +148,8 @@ describe("BCFactory", function () {
       await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, id3);
 
       expect(await genesis.balanceOf(wl1.address)).equal(3);
+
+      await genesis.endMinting();
 
       await assertThrowsMessage(factory.connect(wl1).mintOracle(id1, id2, id3, id4), "NotGenesisOwner()");
     });
