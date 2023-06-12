@@ -41,7 +41,6 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   BCOracleToken public oracleToken;
 
   bytes32 public merkleRoot;
-  bool public oracleMintingStarted;
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -70,10 +69,6 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     if (merkleRoot == 0) revert RootNotSet();
     if (!MerkleProofUpgradeable.verify(proof, merkleRoot, _encodeLeaf(_msgSender(), tokenId))) revert InvalidProof();
     genesisToken.mint(_msgSender(), tokenId);
-  }
-
-  function startOracleMinting() external onlyOwner {
-    oracleMintingStarted = true;
   }
 
   function _validateBodyParts(
