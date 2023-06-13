@@ -64,4 +64,4 @@ db
 /etherscan
 .openzeppelin
 /test/fixtures/csv
-/export
+/export/deployed.json

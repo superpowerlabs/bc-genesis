@@ -2,8 +2,15 @@ const {requirePath} = require("require-or-mock");
 const path = require("path");
 const fs = require("fs");
 // if missed, it sets up a mock
-requirePath(".env");
-requirePath("export/deployed.json");
+requirePath(
+  ".env",
+  `INFURA_API_KEY=f3fe188888888c249d91c2224c27b784
+FOR_TESTNET=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+FOR_MAINNET=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+BNB_MAINNET=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+`
+);
+requirePath("export/deployed.json", "{}");
 
 require("dotenv").config();
 require("@secrez/cryptoenv").parse(() => process.env.NODE_ENV !== "test");
@@ -42,7 +49,7 @@ task("accounts", "Prints the list of accounts", async () => {
  */
 module.exports = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.17",
     settings: {
       optimizer: {
         enabled: true,

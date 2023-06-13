@@ -84,6 +84,18 @@ const Helpers = {
       }
     }
   },
+
+  getProofAndIdByIndex(wallet, index) {
+    let i = 0;
+    for (let child of proofs.children) {
+      if (child.winner.wallet === toChecksumAddress(wallet)) {
+        if (i === index) {
+          return [child.proof, child.winner.tokenId];
+        }
+        i++;
+      }
+    }
+  },
 };
 
 module.exports = Helpers;

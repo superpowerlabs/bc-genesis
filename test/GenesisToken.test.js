@@ -58,7 +58,7 @@ describe("GenesisToken", function () {
       await bodyPart.connect(wl1).approve(factory.address, id);
       expect(await bodyPart.locked(id)).equal(false);
 
-      await expect(factory.lockGenesis(id)).revertedWith("Forbidden");
+      await expect(factory.lockGenesis(id)).revertedWith("NotALocker");
       await bodyPart.setLocker(factory.address);
       expect(await bodyPart.isLocker(factory.address)).equal(true);
       await factory.lockGenesis(id);

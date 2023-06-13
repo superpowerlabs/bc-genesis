@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const {MerkleTree} = require("merkletreejs");
 const ethers = require("ethers");
 const keccak256 = require("keccak256");
@@ -19,7 +17,7 @@ const leaves = data.map((e) => keccak256(e));
 const tree = new MerkleTree(leaves, keccak256, {sort: true});
 const root = tree.getRoot().toString("hex");
 
-fs.writeFileSync(path.resolve(__dirname, "../data/merkleTree.json"), JSON.stringify(tree, null, 2));
+fs.writeFileSync(path.resolve(__dirname, "../data/merkleTree.json"), JSON.stringify(tree));
 
 const proofs = {
   root,
@@ -30,7 +28,7 @@ for (let i = 0; i < leaves.length; i++) {
   let proof = tree.getHexProof(leaves[i]);
   let leaf = leaves[i];
   let wallet = data[i].substring(0, 42);
-  let tokenId = winners[i].tokenId;
+  let tokenId = parseInt(data[i].substring(42));
   proofs.children.push({
     winner: {
       tokenId,
