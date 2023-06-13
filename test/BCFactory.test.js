@@ -105,8 +105,8 @@ describe("BCFactory", function () {
       expect(await genesis.balanceOf(wl1.address)).equal(19);
 
       await expect(factory.connect(wl1).mintOracle(1, 6, 11, 53)).revertedWith("NotGenesisOwner()");
-      // await expect(factory.connect(wl1).mintOracle(1, 6, 11, 13)).revertedWith("NotAFullSet()");
-      // await expect(factory.connect(wl1).mintOracle(1, 6, 11, 49)).revertedWith("NotAllSameRarity()");
+      await expect(factory.connect(wl1).mintOracle(1, 6, 11, 13)).revertedWith("NotAFullSet()");
+      await expect(factory.connect(wl1).mintOracle(1, 6, 11, 49)).revertedWith("NotAllSameRarity()");
 
       await expect(factory.connect(wl1).mintOracle(2, 6, 11, 13))
         .emit(factory, "OracleMinted")

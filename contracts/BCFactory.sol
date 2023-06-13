@@ -99,8 +99,14 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     _isOwner(partId2);
     _isOwner(partId3);
     _isOwner(partId4);
-    // temporary random simulation
-    return IAttributes.Rarity(block.number % 4);
+    uint256 rarity_ = _rarityByIndex(partId1);
+    if (rarity_ != _rarityByIndex(partId2) || rarity_ != _rarityByIndex(partId3) || rarity_ != _rarityByIndex(partId4)) {
+      revert NotAllSameRarity();
+    }
+    if (part(partId1) + part(partId2) + part(partId3) + part(partId4) != 14) {
+      revert NotAFullSet();
+    }
+    return IAttributes.Rarity(rarity_ - 1);
   }
 
   function mintOracle(
@@ -122,6 +128,22 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     }
   }
 
+  function part(uint256 genesisId) public pure returns (uint256) {
+    uint256 _rangeSize = 40;
+    uint256 base = (genesisId - 1) / _rangeSize;
+    uint256 diff = (base * _rangeSize);
+    genesisId -= diff;
+    uint256 factorInverse = 1;
+    for (uint256 i = 1; i <= _rangeSize; i++) {
+      if ((13 * i) % _rangeSize == 1) {
+        factorInverse = i;
+        break;
+      }
+    }
+    uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - 17) % _rangeSize) * factorInverse) % _rangeSize) + 1;
+    return (((baseId - 1) % _rangeSize) / 10)**2;
+  }
+
   function encode(uint256[] memory arr) public pure returns (uint256) {
     uint256 res;
     if (arr.length > 77) revert TooManyValues();
@@ -130,5 +152,17 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
       res += arr[i] * (10**i);
     }
     return res;
+  }
+
+  function _decode(uint256 encoded, uint256 index) public pure returns (uint256) {
+    uint256 val = encoded / (10**index);
+    return val % 10;
+  }
+
+  function _rarityByIndex(uint256 index_) internal view returns (uint256) {
+    uint256 elem = _rarityIndex[index_ / (40 * 77)];
+    uint256 onElem = index_ % (40 * 77);
+    uint256 remainder = onElem / 40;
+    return _decode(elem, remainder);
   }
 }
