@@ -101,87 +101,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     genesisToken.mint(_msgSender(), tokenId);
   }
 
-  function _isOwner(uint256 partId) internal view {
-    if (genesisToken.ownerOf(partId) != _msgSender()) revert NotGenesisOwner();
-  }
-
-  function _validateBodyParts(
-    uint256 partId1,
-    uint256 partId2,
-    uint256 partId3,
-    uint256 partId4
-  ) internal view returns (IAttributes.Rarity) {
-    _isOwner(partId1);
-    _isOwner(partId2);
-    _isOwner(partId3);
-    _isOwner(partId4);
-    uint256 rarity_ = rarityByIndex(partId1);
-    if (rarity_ != rarityByIndex(partId2) || rarity_ != rarityByIndex(partId3) || rarity_ != rarityByIndex(partId4)) {
-      revert NotAllSameRarity();
-    }
-    if (part(partId1) + part(partId2) + part(partId3) + part(partId4) != 14) {
-      revert NotAFullSet();
-    }
-    return IAttributes.Rarity(rarity_);
-  }
-
   function mintOracle(
     uint256 partId1,
     uint256 partId2,
     uint256 partId3,
     uint256 partId4
-  ) external {
-    if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
-    IAttributes.Rarity rarity = _validateBodyParts(partId1, partId2, partId3, partId4);
-    uint256 oracleId = oracleToken.mint(_msgSender(), rarity);
-    try genesisToken.burnBatch([partId1, partId2, partId3, partId4]) {
-      // do nothing
-    } catch {
-      revert BurningFailed();
-    }
-    emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
-  }
-
-  function saveRarityIndex(uint256[] memory rarityIndex_) public onlyOwner {
-    for (uint256 i = 0; i < rarityIndex_.length; i++) {
-      _rarityIndex[i] = rarityIndex_[i];
-    }
-  }
-
-  function part(uint256 genesisId) public view returns (uint256) {
-    uint256 base = (genesisId - 1) / _rangeSize;
-    uint256 diff = (base * _rangeSize);
-    genesisId -= diff;
-    uint256 factorInverse = 1;
-    for (uint256 i = 1; i <= _rangeSize; i++) {
-      if ((_factor * i) % _rangeSize == 1) {
-        factorInverse = i;
-        break;
-      }
-    }
-    uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - _addend) % _rangeSize) * factorInverse) % _rangeSize) + 1;
-    return (((baseId - 1) % _rangeSize) / 10)**2;
-  }
-
-  function encode(uint256[] memory arr) public pure returns (uint256) {
-    uint256 res;
-    if (arr.length > 77) revert TooManyValues();
-    for (uint256 i = 0; i < arr.length; i++) {
-      if (arr[i] > 4) revert InvalidRarity();
-      res += arr[i] * (10**i);
-    }
-    return res;
-  }
-
-  function _decode(uint256 encoded, uint256 index) internal pure returns (uint256) {
-    uint256 val = encoded / (10**index);
-    return val % 10;
-  }
-
-  function rarityByIndex(uint256 index_) public view returns (uint256) {
-    uint256 elem = _rarityIndex[index_ / (_rangeSize * 77)];
-    uint256 onElem = index_ % (_rangeSize * 77);
-    uint256 remainder = onElem / _rangeSize;
-    return _decode(elem, remainder);
-  }
+  ) external {}
 }
