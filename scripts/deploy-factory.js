@@ -23,7 +23,6 @@ async function main() {
   const factory = await deployUtils.deployProxy("BCFactory", genesisToken.address, oracle.address);
   await deployUtils.Tx(genesisToken.setFactory(factory.address, true), "Setting factory address");
   await deployUtils.Tx(oracle.setFactory(factory.address, true), "Setting factory address");
-  await deployUtils.Tx(factory.setRoot(`0x` + rootLeavesAndProofs.root), "Setting the root of the merkle tree");
 }
 
 main()

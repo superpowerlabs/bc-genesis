@@ -88,7 +88,7 @@ describe("BCFactory", function () {
     });
   });
 
-  describe.only("mintOracle", function () {
+  describe("mintOracle", function () {
     it("should mint oracle", async function () {
       for (k = 0; k < 4; k++) {
         for (let i = 1; i < 17; i++) {

@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "rimraf artifacts cache coverage coverage.json",
     "test": "NODE_ENV=test npx hardhat test",
+    "test:gas": "NODE_ENV=test GAS_REPORT=yes npx hardhat test",
     "compile": "NODE_ENV=test npx hardhat compile",
     "lint": "prettier --write 'contracts/**/*.sol' && solhint 'contracts/**/*.sol'",
     "format": "npx prettier --write ./test/fixtures/**/*.js ./**/*.js",

@@ -17,13 +17,11 @@ import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
 import "./interfaces/IAttributes.sol";
 
-//import "hardhat/console.sol";
-
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
   using SafeMathUpgradeable for uint256;
 
-  event OracleMinted(uint256 id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
+  event OracleMinted(uint256 indexed id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
   event AllowListMintingFinished();
   event RootSet(bytes32 root);
 
@@ -40,6 +38,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   error NotAFullSet();
   error TooManyValues();
   error InvalidRarity();
+  error BurningFailed();
 
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
@@ -51,6 +50,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   bool public allowListMintingFinished;
   mapping(uint256 => uint256) internal _rarityIndex;
 
+  uint256 private _factor;
+  uint256 private _addend;
+  uint256 private _rangeSize;
+
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
     __UUPSUpgradeable_init();
@@ -58,6 +61,19 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     if (!IERC165Upgradeable(oracle_).supportsInterface(type(IERC721Upgradeable).interfaceId)) revert NotAndERC721(oracle_);
     genesisToken = BCGenesisToken(genesis_);
     oracleToken = BCOracleToken(oracle_);
+    // For initial testing, we use the following coprime.
+    // They will be updated for mainnet distribution
+    updateRevealParams(13, 17, 40);
+  }
+
+  function updateRevealParams(
+    uint256 factor_,
+    uint256 addend_,
+    uint256 rangeSize_
+  ) public onlyOwner {
+    _factor = factor_;
+    _addend = addend_;
+    _rangeSize = rangeSize_;
   }
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
@@ -99,14 +115,14 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     _isOwner(partId2);
     _isOwner(partId3);
     _isOwner(partId4);
-    uint256 rarity_ = _rarityByIndex(partId1);
-    if (rarity_ != _rarityByIndex(partId2) || rarity_ != _rarityByIndex(partId3) || rarity_ != _rarityByIndex(partId4)) {
+    uint256 rarity_ = rarityByIndex(partId1);
+    if (rarity_ != rarityByIndex(partId2) || rarity_ != rarityByIndex(partId3) || rarity_ != rarityByIndex(partId4)) {
       revert NotAllSameRarity();
     }
     if (part(partId1) + part(partId2) + part(partId3) + part(partId4) != 14) {
       revert NotAFullSet();
     }
-    return IAttributes.Rarity(rarity_ - 1);
+    return IAttributes.Rarity(rarity_);
   }
 
   function mintOracle(
@@ -118,7 +134,11 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
     IAttributes.Rarity rarity = _validateBodyParts(partId1, partId2, partId3, partId4);
     uint256 oracleId = oracleToken.mint(_msgSender(), rarity);
-    genesisToken.burnBatch([partId1, partId2, partId3, partId4]);
+    try genesisToken.burnBatch([partId1, partId2, partId3, partId4]) {
+      // do nothing
+    } catch {
+      revert BurningFailed();
+    }
     emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
   }
 
@@ -128,19 +148,18 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     }
   }
 
-  function part(uint256 genesisId) public pure returns (uint256) {
-    uint256 _rangeSize = 40;
+  function part(uint256 genesisId) public view returns (uint256) {
     uint256 base = (genesisId - 1) / _rangeSize;
     uint256 diff = (base * _rangeSize);
     genesisId -= diff;
     uint256 factorInverse = 1;
     for (uint256 i = 1; i <= _rangeSize; i++) {
-      if ((13 * i) % _rangeSize == 1) {
+      if ((_factor * i) % _rangeSize == 1) {
         factorInverse = i;
         break;
       }
     }
-    uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - 17) % _rangeSize) * factorInverse) % _rangeSize) + 1;
+    uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - _addend) % _rangeSize) * factorInverse) % _rangeSize) + 1;
     return (((baseId - 1) % _rangeSize) / 10)**2;
   }
 
@@ -154,15 +173,15 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     return res;
   }
 
-  function _decode(uint256 encoded, uint256 index) public pure returns (uint256) {
+  function _decode(uint256 encoded, uint256 index) internal pure returns (uint256) {
     uint256 val = encoded / (10**index);
     return val % 10;
   }
 
-  function _rarityByIndex(uint256 index_) internal view returns (uint256) {
-    uint256 elem = _rarityIndex[index_ / (40 * 77)];
-    uint256 onElem = index_ % (40 * 77);
-    uint256 remainder = onElem / 40;
+  function rarityByIndex(uint256 index_) public view returns (uint256) {
+    uint256 elem = _rarityIndex[index_ / (_rangeSize * 77)];
+    uint256 onElem = index_ % (_rangeSize * 77);
+    uint256 remainder = onElem / _rangeSize;
     return _decode(elem, remainder);
   }
 }
