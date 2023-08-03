@@ -110,31 +110,34 @@ describe("BCFactory", function () {
       await increaseBlockTimestampBy(3600 * 2);
 
       proof = getProof(0, wl3.address);
-      await assertThrowsMessage(factory.connect(wl3).mintGenesisPhaseOne(proof), "PhaseClosedOrNotOpenYet()");
+      await expect(factory.connect(wl3).mintGenesisPhaseOne(proof)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 3);
 
       proof = getProof(1, wl2.address);
-      await expect(factory.connect(wl2).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 3);
+      await expect(factory.connect(wl2).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 4);
 
       proof = getProof(1, wl3.address);
-      await expect(factory.connect(wl3).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 4);
+      await expect(factory.connect(wl3).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 5);
 
       proof = getProof(1, wl4.address);
-      await expect(factory.connect(wl4).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl4.address, 5);
+      await expect(factory.connect(wl4).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl4.address, 6);
 
       await increaseBlockTimestampBy(3600 * 24);
 
-      proof = getProof(1, wl5.address);
-      await assertThrowsMessage(factory.connect(wl5).mintGenesisPhaseOne(proof), "PhaseClosedOrNotOpenYet()");
-
-      await expect(factory.connect(wl5).mintGenesisPhaseThree()).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 6);
-
       await expect(factory.connect(wl5).mintGenesisPhaseThree()).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 7);
 
-      await assertThrowsMessage(factory.connect(wl5).mintGenesisPhaseThree(), "TooManyTokens()");
+      await expect(factory.connect(wl5).mintGenesisPhaseThree()).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 8);
+
+      proof = getProof(1, wl5.address);
+      await expect(factory.connect(wl5).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 9);
+      //
+      proof = getProof(0, nwl2.address);
+      await expect(factory.connect(nwl2).mintGenesisPhaseOne(proof))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, nwl2.address, 10);
 
       await genesis.endMinting();
 
-      await assertThrowsMessage(factory.connect(wl6).mintGenesisPhaseThree(), "PhaseClosedOrNotOpenYet()");
+      await assertThrowsMessage(factory.connect(wl7).mintGenesisPhaseThree(), "PhaseClosedOrNotOpenYet()");
     });
   });
 });

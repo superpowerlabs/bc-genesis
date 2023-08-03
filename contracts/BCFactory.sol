@@ -109,9 +109,9 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   function currentPhase() public view returns (Phase) {
     if (genesisToken.mintEnded()) return Phase.Closed;
-    if (startAt > block.timestamp) return Phase.NotOpened;
-    if (block.timestamp >= startAt && block.timestamp < startAt + 2 hours) return Phase.GuaranteedAllowList;
-    if (block.timestamp >= startAt + 2 hours && block.timestamp < startAt + 1 days) return Phase.GeneralAllowList;
+    if (startAt == 0 || block.timestamp < startAt) return Phase.NotOpened;
+    if (block.timestamp < startAt + 2 hours) return Phase.GuaranteedAllowList;
+    if (block.timestamp < startAt + 1 days) return Phase.GeneralAllowList;
     return Phase.Public;
   }
 
@@ -121,24 +121,26 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   function mintGenesisPhaseOne(bytes32[] calldata proof) external {
     if (merkleOneRoot == 0) revert RootNotSet();
-    if (currentPhase() != Phase.GuaranteedAllowList) revert PhaseClosedOrNotOpenYet();
+    if (currentPhase() < Phase.GuaranteedAllowList) revert PhaseClosedOrNotOpenYet();
     _useSignature(proof);
     _validateProof(proof, merkleOneRoot);
-    genesisToken.mint(_msgSender());
+    _mintGenesis();
   }
 
   function mintGenesisPhaseTwo(bytes32[] calldata proof) external {
-    if (currentPhase() != Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
+    if (currentPhase() < Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
     _useSignature(proof);
     _validateProof(proof, merkleTwoRoot);
-    genesisToken.mint(_msgSender());
+    _mintGenesis();
   }
 
   function mintGenesisPhaseThree() external {
-    if (genesisToken.totalSupply() == 2400) revert AllTokensHaveBeenMinted();
     if (currentPhase() != Phase.Public) revert PhaseClosedOrNotOpenYet();
-    // max 2 tokens per address
-    if (genesisToken.balanceOf(_msgSender()) > 1) revert TooManyTokens();
+    _mintGenesis();
+  }
+
+  function _mintGenesis() internal {
+    if (genesisToken.totalSupply() >= 2400) revert AllTokensHaveBeenMinted();
     genesisToken.mint(_msgSender());
   }
 
