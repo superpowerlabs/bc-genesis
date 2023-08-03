@@ -1,0 +1,57 @@
+{
+  "root": "fdcebb290a2d07c5d8b989dd4cf35af738c941acaa390cce50bb56e61d65c59f",
+  "children": [
+    {
+      "data": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "leaf": "0xe9707d0e6171f728f7473c24cc0432a9b07eaaf1efed6a137a4a8c12c79552d9",
+      "proof": [
+        "0xf4ca8532861558e29f9858a3804245bb30f0303cc71e4192e41546237b6ce58b",
+        "0x6192e66c767927d517587867fb1d67e689ee19bd37ec0717321f1b9a971a4082"
+      ]
+    },
+    {
+      "data": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "leaf": "0x00314e565e0574cb412563df634608d76f5c59d9f817e85966100ec1d48005c0",
+      "proof": [
+        "0x1ebaa930b8e9130423c183bf38b0564b0103180b7dad301013b18e59880541ae",
+        "0x4f2c3f440cc5ddd2a9eaffbb4fb916550b47c1856453519f5340dcb789107697",
+        "0x9e1d84ca9c7548b9920bc4881db28863cc28dcc8447bac67b0881621aa70ac1b"
+      ]
+    },
+    {
+      "data": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "leaf": "0x8a3552d60a98e0ade765adddad0a2e420ca9b1eef5f326ba7ab860bb4ea72c94",
+      "proof": [
+        "0xe5c951f74bc89efa166514ac99d872f6b7a3c11aff63f51246c3742dfa925c9b",
+        "0xb1a5bda84b83f7f014abcf0cf69cab5a4de1c3ececa8123a5e4aaacb01f63f83",
+        "0x9e1d84ca9c7548b9920bc4881db28863cc28dcc8447bac67b0881621aa70ac1b"
+      ]
+    },
+    {
+      "data": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+      "leaf": "0x1ebaa930b8e9130423c183bf38b0564b0103180b7dad301013b18e59880541ae",
+      "proof": [
+        "0x00314e565e0574cb412563df634608d76f5c59d9f817e85966100ec1d48005c0",
+        "0x4f2c3f440cc5ddd2a9eaffbb4fb916550b47c1856453519f5340dcb789107697",
+        "0x9e1d84ca9c7548b9920bc4881db28863cc28dcc8447bac67b0881621aa70ac1b"
+      ]
+    },
+    {
+      "data": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+      "leaf": "0xf4ca8532861558e29f9858a3804245bb30f0303cc71e4192e41546237b6ce58b",
+      "proof": [
+        "0xe9707d0e6171f728f7473c24cc0432a9b07eaaf1efed6a137a4a8c12c79552d9",
+        "0x6192e66c767927d517587867fb1d67e689ee19bd37ec0717321f1b9a971a4082"
+      ]
+    },
+    {
+      "data": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+      "leaf": "0xe5c951f74bc89efa166514ac99d872f6b7a3c11aff63f51246c3742dfa925c9b",
+      "proof": [
+        "0x8a3552d60a98e0ade765adddad0a2e420ca9b1eef5f326ba7ab860bb4ea72c94",
+        "0xb1a5bda84b83f7f014abcf0cf69cab5a4de1c3ececa8123a5e4aaacb01f63f83",
+        "0x9e1d84ca9c7548b9920bc4881db28863cc28dcc8447bac67b0881621aa70ac1b"
+      ]
+    }
+  ]
+}

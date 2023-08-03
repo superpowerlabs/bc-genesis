@@ -2542,7 +2542,7 @@
       {
         "anonymous": false,
         "inputs": [],
-        "name": "AllowListMintingFinished",
+        "name": "GuaranteedAllowListMintingFinished",
         "type": "event"
       },
       {
@@ -2679,7 +2679,7 @@
       },
       {
         "inputs": [],
-        "name": "allowListMintingFinished",
+        "name": "phaseOneFinished",
         "outputs": [
           {
             "internalType": "bool",

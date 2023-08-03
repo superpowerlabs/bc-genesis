@@ -17,6 +17,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error ZeroAddress();
   error ParametersAlreadySetUp();
   error InvalidStart();
+  error MintingHasEnded();
 
   using AddressUpgradeable for address;
   uint256 internal _maxSupply;
@@ -73,7 +74,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function mintEnded() public view override returns (bool) {
-    return _mintEnded;
+    return _mintEnded || totalSupply() >= maxSupply();
   }
 
   function maxSupply() public view override returns (uint256) {

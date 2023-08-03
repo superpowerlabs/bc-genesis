@@ -24,7 +24,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using SafeMathUpgradeable for uint256;
 
   event OracleMinted(uint256 id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
-  event AllowListMintingFinished();
+  event GuaranteedAllowListMintingFinished();
   event RootSet(bytes32 root);
 
   error NotAndERC721(address);
@@ -48,7 +48,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   // Version 2
 
-  bool public allowListMintingFinished;
+  bool public phaseOneFinished;
   mapping(uint256 => uint256) internal _rarityIndex;
 
   function initialize(address genesis_, address oracle_) public initializer {
@@ -70,8 +70,8 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function finishAllowListMinting() external onlyOwner {
-    allowListMintingFinished = true;
-    emit AllowListMintingFinished();
+    phaseOneFinished = true;
+    emit GuaranteedAllowListMintingFinished();
   }
 
   function _encodeLeaf(address recipient, uint256 tokenId) internal pure returns (bytes32) {
@@ -80,7 +80,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   function mintGenesis(uint256 tokenId, bytes32[] calldata proof) external {
     if (merkleRoot == 0) revert RootNotSet();
-    if (allowListMintingFinished) revert AllowListFinished();
+    if (phaseOneFinished) revert AllowListFinished();
     if (!MerkleProofUpgradeable.verify(proof, merkleRoot, _encodeLeaf(_msgSender(), tokenId))) revert InvalidProof();
     genesisToken.mint(_msgSender(), tokenId);
   }
