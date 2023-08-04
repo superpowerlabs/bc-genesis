@@ -61,7 +61,6 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   // Version 2
 
-  Phase public phase;
   uint256 public startAt;
 
   mapping(uint256 => uint256) internal _rarityIndex;
