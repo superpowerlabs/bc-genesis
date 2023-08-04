@@ -11,6 +11,11 @@ const {
   getProofAndIdByIndex,
 } = require("./helpers");
 
+const rarityIndex = [
+  2, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+  1, 1, 0, 4, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3,
+];
+
 describe("BCFactory", function () {
   let factory;
   let genesis;
@@ -147,14 +152,14 @@ describe("BCFactory", function () {
     it("should mint oracle", async function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
+      await factory.saveRarityIndex(rarityIndex);
       // jump to public phase, to simplify testing
       await increaseBlockTimestampBy(3600 * 25);
 
       for (let k = 0; k < 4; k++) {
         for (let i = 1; i < 17; i++) {
           let wl = i > 12 ? wl4 : i > 8 ? wl3 : i > 4 ? wl2 : wl1;
-          let [proof, id] = getProofAndIdByIndex(wl.address, k * 4 + ((i - 1) % 4));
-          await factory.connect(wl).mintGenesis(id, proof);
+          await factory.connect(wl).mintGenesis([], false);
         }
       }
 
