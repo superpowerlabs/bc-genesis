@@ -152,7 +152,15 @@ describe("BCFactory", function () {
     it("should mint oracle", async function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
-      await factory.saveRarityIndex(indexes);
+
+      encoded = [];
+      let tmp = [];
+      for (let i of indexes) {
+        tmp.push(i);
+      }
+      encoded.push(await factory.encode(tmp));
+      await factory.saveRarityIndex(encoded);
+
       // jump to public phase, to simplify testing
       await increaseBlockTimestampBy(3600 * 25);
 
@@ -196,10 +204,15 @@ describe("BCFactory", function () {
   describe("encode/decode", async function () {
     it("should verify that the rarity by index is correct", async function () {
       this.timeout(10000);
-      await factory.saveRarityIndex(indexes);
+      encoded = [];
+      let tmp = [];
+      for (let i of indexes) {
+        tmp.push(i);
+      }
+      encoded.push(await factory.encode(tmp));
+      await factory.saveRarityIndex(encoded);
       for (let i = 0; i < 2400; i += Math.round(13 * Math.random())) {
         const rarity = await factory.rarityByIndex(i);
-        console.log(rarity);
         expect(rarity).to.equal(indexes[Math.floor(i / 40)]);
       }
     });
