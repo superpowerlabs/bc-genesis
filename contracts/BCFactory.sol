@@ -42,6 +42,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   error TooManyTokens();
   error InvalidStart();
   error AllTokensHaveBeenMinted();
+  error AlreadySet();
 
   enum Phase {
     NotOpened,
@@ -103,6 +104,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   function start(uint256 timestamp) external onlyOwner {
     if (timestamp < block.timestamp || timestamp > block.timestamp + 1 days) revert InvalidStart();
+    if (startAt > 0 && block.timestamp > startAt) revert AlreadySet();
     startAt = timestamp;
   }
 
@@ -118,27 +120,19 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     return keccak256(abi.encodePacked(recipient));
   }
 
-  function mintGenesisPhaseOne(bytes32[] calldata proof) external {
+  function mintGenesis(bytes32[] calldata proof, bool isGuaranteed) external {
     if (merkleOneRoot == 0) revert RootNotSet();
-    if (currentPhase() < Phase.GuaranteedAllowList) revert PhaseClosedOrNotOpenYet();
-    _useProof(proof);
-    _validateProof(proof, merkleOneRoot);
-    _mintGenesis();
-  }
-
-  function mintGenesisPhaseTwo(bytes32[] calldata proof) external {
-    if (currentPhase() < Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
-    _useProof(proof);
-    _validateProof(proof, merkleTwoRoot);
-    _mintGenesis();
-  }
-
-  function mintGenesisPhaseThree() external {
-    if (currentPhase() != Phase.Public) revert PhaseClosedOrNotOpenYet();
-    _mintGenesis();
-  }
-
-  function _mintGenesis() internal {
+    Phase phase = currentPhase();
+    if (phase < Phase.GuaranteedAllowList || phase > Phase.Public) revert PhaseClosedOrNotOpenYet();
+    if (phase < Phase.Public) {
+      _useProof(proof);
+      if (isGuaranteed) {
+        _validateProof(proof, merkleOneRoot);
+      } else {
+        if (phase < Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
+        _validateProof(proof, merkleTwoRoot);
+      }
+    }
     if (genesisToken.totalSupply() >= 2400) revert AllTokensHaveBeenMinted();
     genesisToken.mint(_msgSender());
   }

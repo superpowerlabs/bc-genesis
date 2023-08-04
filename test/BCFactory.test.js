@@ -68,7 +68,7 @@ describe("BCFactory", function () {
   describe("mintGenesis", function () {
     it("should fail to mint if phase not opened", async function () {
       let proof = getProof(0, wl1.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesisPhaseOne(proof), "PhaseClosedOrNotOpenYet()");
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, true), "PhaseClosedOrNotOpenYet()");
     });
 
     it("should mint parts", async function () {
@@ -76,7 +76,7 @@ describe("BCFactory", function () {
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
       let proof = getProof(0, wl1.address);
-      await factory.connect(wl1).mintGenesisPhaseOne(proof);
+      await factory.connect(wl1).mintGenesis(proof, true);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
     });
 
@@ -85,12 +85,12 @@ describe("BCFactory", function () {
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
       let proof = getProof(0, wl2.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesisPhaseOne(proof), "InvalidProof()");
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, true), "InvalidProof()");
     });
 
     it("should fail if wrong phase", async function () {
       proof = getProof(1, wl1.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesisPhaseTwo(proof), "PhaseClosedOrNotOpenYet()");
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, false), "PhaseClosedOrNotOpenYet()");
     });
 
     it("should fail to mint if phase not opened", async function () {
@@ -99,47 +99,46 @@ describe("BCFactory", function () {
       await increaseBlockTimestampBy(2000);
 
       let proof = getProof(0, wl1.address);
-      await expect(factory.connect(wl1).mintGenesisPhaseOne(proof)).emit(genesis, "Transfer").withArgs(addr0, wl1.address, 1);
+      await expect(factory.connect(wl1).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl1.address, 1);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
 
       proof = getProof(0, wl2.address);
-      await expect(factory.connect(wl2).mintGenesisPhaseOne(proof)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 2);
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, false), "PhaseClosedOrNotOpenYet()");
+      await expect(factory.connect(wl2).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 2);
 
       expect(await factory.hasProofBeenUsed(proof)).to.equal(true);
 
-      await assertThrowsMessage(factory.connect(wl2).mintGenesisPhaseOne(proof), "ProofAlreadyUsed()");
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, true), "ProofAlreadyUsed()");
 
       await increaseBlockTimestampBy(3600 * 2);
 
       proof = getProof(0, wl3.address);
-      await expect(factory.connect(wl3).mintGenesisPhaseOne(proof)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 3);
+      await expect(factory.connect(wl3).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 3);
 
       proof = getProof(1, wl2.address);
-      await expect(factory.connect(wl2).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 4);
+      await expect(factory.connect(wl2).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 4);
 
       proof = getProof(1, wl3.address);
-      await expect(factory.connect(wl3).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 5);
+      await expect(factory.connect(wl3).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 5);
 
       proof = getProof(1, wl4.address);
-      await expect(factory.connect(wl4).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl4.address, 6);
+      await expect(factory.connect(wl4).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl4.address, 6);
 
       await increaseBlockTimestampBy(3600 * 24);
 
-      await expect(factory.connect(wl5).mintGenesisPhaseThree()).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 7);
+      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 7);
 
-      await expect(factory.connect(wl5).mintGenesisPhaseThree()).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 8);
+      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 8);
 
       proof = getProof(1, wl5.address);
-      await expect(factory.connect(wl5).mintGenesisPhaseTwo(proof)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 9);
+      await expect(factory.connect(wl5).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 9);
       //
       proof = getProof(0, nwl2.address);
-      await expect(factory.connect(nwl2).mintGenesisPhaseOne(proof))
-        .emit(genesis, "Transfer")
-        .withArgs(addr0, nwl2.address, 10);
+      await expect(factory.connect(nwl2).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, nwl2.address, 10);
 
       await genesis.endMinting();
 
-      await assertThrowsMessage(factory.connect(wl7).mintGenesisPhaseThree(), "PhaseClosedOrNotOpenYet()");
+      await assertThrowsMessage(factory.connect(wl7).mintGenesis([], false), "PhaseClosedOrNotOpenYet()");
     });
   });
 });
