@@ -148,13 +148,18 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function _useProof(bytes32[] calldata proof) internal {
-    bytes32 key = keccak256(abi.encodePacked(_msgSender(), proof));
+    bytes32 key = keccak256(abi.encodePacked(proof));
     if (usedProofs[key]) revert ProofAlreadyUsed();
     usedProofs[key] = true;
   }
 
   function genesisMinted() external view returns (uint256) {
     return genesisToken.totalSupply();
+  }
+
+  function hasProofBeenUsed(bytes32[] calldata proof) external view returns (bool) {
+    bytes32 key = keccak256(abi.encodePacked(proof));
+    return usedProofs[key];
   }
 
   function mintOracle(

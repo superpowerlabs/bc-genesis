@@ -105,6 +105,8 @@ describe("BCFactory", function () {
       proof = getProof(0, wl2.address);
       await expect(factory.connect(wl2).mintGenesisPhaseOne(proof)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 2);
 
+      expect(await factory.hasProofBeenUsed(proof)).to.equal(true);
+
       await assertThrowsMessage(factory.connect(wl2).mintGenesisPhaseOne(proof), "ProofAlreadyUsed()");
 
       await increaseBlockTimestampBy(3600 * 2);
