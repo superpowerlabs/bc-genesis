@@ -27,8 +27,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   event RootSet(bytes32 root1, bytes32 root2);
 
   error NotAndERC721(address);
-  error InvalidSignature();
-  error SignatureAlreadyUsed();
+  error ProofAlreadyUsed();
   error NotGenesisOwner();
   error OracleMintingFinished();
   error RootNotSet();
@@ -57,7 +56,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   bytes32 public merkleOneRoot;
   bytes32 public merkleTwoRoot;
-  mapping(bytes32 => bool) public usedSignatures;
+  mapping(bytes32 => bool) public usedProofs;
 
   // Version 2
 
@@ -122,14 +121,14 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   function mintGenesisPhaseOne(bytes32[] calldata proof) external {
     if (merkleOneRoot == 0) revert RootNotSet();
     if (currentPhase() < Phase.GuaranteedAllowList) revert PhaseClosedOrNotOpenYet();
-    _useSignature(proof);
+    _useProof(proof);
     _validateProof(proof, merkleOneRoot);
     _mintGenesis();
   }
 
   function mintGenesisPhaseTwo(bytes32[] calldata proof) external {
     if (currentPhase() < Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
-    _useSignature(proof);
+    _useProof(proof);
     _validateProof(proof, merkleTwoRoot);
     _mintGenesis();
   }
@@ -148,10 +147,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     if (!MerkleProofUpgradeable.verify(proof, root, _encodeLeaf(_msgSender()))) revert InvalidProof();
   }
 
-  function _useSignature(bytes32[] calldata proof) internal {
+  function _useProof(bytes32[] calldata proof) internal {
     bytes32 key = keccak256(abi.encodePacked(_msgSender(), proof));
-    if (usedSignatures[key]) revert SignatureAlreadyUsed();
-    usedSignatures[key] = true;
+    if (usedProofs[key]) revert ProofAlreadyUsed();
+    usedProofs[key] = true;
   }
 
   function genesisMinted() external view returns (uint256) {
