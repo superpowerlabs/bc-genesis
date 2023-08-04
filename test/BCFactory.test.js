@@ -11,7 +11,7 @@ const {
   getProofAndIdByIndex,
 } = require("./helpers");
 
-const rarityIndex = [
+const indexes = [
   2, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
   1, 1, 0, 4, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3,
 ];
@@ -152,7 +152,7 @@ describe("BCFactory", function () {
     it("should mint oracle", async function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
-      await factory.saveRarityIndex(rarityIndex);
+      await factory.saveRarityIndex(indexes);
       // jump to public phase, to simplify testing
       await increaseBlockTimestampBy(3600 * 25);
 
@@ -196,8 +196,10 @@ describe("BCFactory", function () {
   describe("encode/decode", async function () {
     it("should verify that the rarity by index is correct", async function () {
       this.timeout(10000);
-      for (let i = 0; i < 10000; i += Math.round(13 * Math.random())) {
+      await factory.saveRarityIndex(indexes);
+      for (let i = 0; i < 2400; i += Math.round(13 * Math.random())) {
         const rarity = await factory.rarityByIndex(i);
+        console.log(rarity);
         expect(rarity).to.equal(indexes[Math.floor(i / 40)]);
       }
     });
