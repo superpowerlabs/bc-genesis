@@ -17,7 +17,7 @@ import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
 import "./interfaces/IAttributes.sol";
 
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
@@ -152,6 +152,10 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     bytes32 key = keccak256(abi.encodePacked(_msgSender(), proof));
     if (usedSignatures[key]) revert SignatureAlreadyUsed();
     usedSignatures[key] = true;
+  }
+
+  function genesisMinted() external view returns (uint256) {
+    return genesisToken.totalSupply();
   }
 
   function mintOracle(
