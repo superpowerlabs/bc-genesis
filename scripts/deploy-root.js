@@ -22,9 +22,6 @@ async function main() {
 
   const factory = await deployUtils.attach("BCFactory");
 
-  const tree0 = require("../data/rootLeavesAndProofs0.json");
-  const tree1 = require("../data/rootLeavesAndProofs1.json");
-
   await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
 }
 
