@@ -17,7 +17,7 @@ import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
 import "./interfaces/IAttributes.sol";
 
-//import "hardhat/console.sol";
+//import {console} from "hardhat/console.sol";
 
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
@@ -93,7 +93,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
-  function setRoot(bytes32 root1_, bytes32 root2_) external onlyOwner {
+  function setRoot(bytes32 root1_, bytes32 root2_) external virtual onlyOwner {
     // allows to update the root, if no genesis has been minted yet
     if (genesisToken.totalSupply() > 0) revert RootAlreadySet();
     merkleOneRoot = root1_;
@@ -107,7 +107,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     startAt = timestamp;
   }
 
-  function currentPhase() public view returns (Phase) {
+  function currentPhase() public view virtual returns (Phase) {
     if (genesisToken.mintEnded()) return Phase.Closed;
     if (startAt == 0 || block.timestamp < startAt) return Phase.NotOpened;
     if (block.timestamp < startAt + 2 hours) return Phase.GuaranteedAllowList;
@@ -115,33 +115,45 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     return Phase.Public;
   }
 
-  function _encodeLeaf(address recipient) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(recipient));
+  function _encodeLeaf(address recipient, uint256 nonce) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(recipient, nonce));
   }
 
-  function mintGenesis(bytes32[] calldata proof, bool isGuaranteed) external {
+  function mintGenesis(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    bool isGuaranteed
+  ) external {
     if (merkleOneRoot == 0) revert RootNotSet();
     Phase phase = currentPhase();
     if (phase < Phase.GuaranteedAllowList || phase > Phase.Public) revert PhaseClosedOrNotOpenYet();
     if (phase < Phase.Public) {
-      _useProof(proof);
+      _useProof(proof, nonce, _msgSender());
       if (isGuaranteed) {
-        _validateProof(proof, merkleOneRoot);
+        _validateProof(proof, nonce, merkleOneRoot);
       } else {
         if (phase < Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
-        _validateProof(proof, merkleTwoRoot);
+        _validateProof(proof, nonce, merkleTwoRoot);
       }
     }
     if (genesisToken.totalSupply() >= 2400) revert AllTokensHaveBeenMinted();
     genesisToken.mint(_msgSender());
   }
 
-  function _validateProof(bytes32[] calldata proof, bytes32 root) internal view {
-    if (!MerkleProofUpgradeable.verify(proof, root, _encodeLeaf(_msgSender()))) revert InvalidProof();
+  function _validateProof(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    bytes32 root
+  ) internal view {
+    if (!MerkleProofUpgradeable.verify(proof, root, _encodeLeaf(_msgSender(), nonce))) revert InvalidProof();
   }
 
-  function _useProof(bytes32[] calldata proof) internal {
-    bytes32 key = keccak256(abi.encodePacked(proof));
+  function _useProof(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    address sender
+  ) internal {
+    bytes32 key = keccak256(abi.encodePacked(proof, nonce, sender));
     if (usedProofs[key]) revert ProofAlreadyUsed();
     usedProofs[key] = true;
   }
@@ -150,8 +162,12 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     return genesisToken.totalSupply();
   }
 
-  function hasProofBeenUsed(bytes32[] calldata proof) external view returns (bool) {
-    bytes32 key = keccak256(abi.encodePacked(proof));
+  function hasProofBeenUsed(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    address sender
+  ) external view returns (bool) {
+    bytes32 key = keccak256(abi.encodePacked(proof, nonce, sender));
     return usedProofs[key];
   }
 

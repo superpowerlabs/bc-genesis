@@ -81,8 +81,8 @@ const Helpers = {
   getProof(phase, wallet) {
     let proofs = phase === 0 ? proofs0 : proofs1;
     for (let child of proofs.children) {
-      if (child.data === toChecksumAddress(wallet)) {
-        return child.proof;
+      if (child.data.startsWith(toChecksumAddress(wallet))) {
+        return child;
       }
     }
   },
