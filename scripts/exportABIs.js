@@ -15,6 +15,7 @@ async function main() {
   abi("BCGenesisToken", "tokens");
   abi("BCOracleToken", "tokens");
   abi("BCFactory", "");
+  abi("BCFactoryForTest", "");
 
   await fs.writeFile(path.resolve(__dirname, "../export/ABIs.json"), JSON.stringify(ABIs, null, 2));
 }

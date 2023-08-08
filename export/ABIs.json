@@ -1,5 +1,5 @@
 {
-  "when": "2023-08-07T23:42:18.374Z",
+  "when": "2023-08-08T05:14:22.168Z",
   "contracts": {
     "BCGenesisToken": [
       {
@@ -2718,6 +2718,16 @@
             "internalType": "bytes32[]",
             "name": "proof",
             "type": "bytes32[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "sender",
+            "type": "address"
           }
         ],
         "name": "hasProofBeenUsed",
@@ -2781,6 +2791,576 @@
             "internalType": "bytes32[]",
             "name": "proof",
             "type": "bytes32[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isGuaranteed",
+            "type": "bool"
+          }
+        ],
+        "name": "mintGenesis",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "partId1",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "partId2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "partId3",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "partId4",
+            "type": "uint256"
+          }
+        ],
+        "name": "mintOracle",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "oracleToken",
+        "outputs": [
+          {
+            "internalType": "contract BCOracleToken",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "proxiableUUID",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "root1_",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "root2_",
+            "type": "bytes32"
+          }
+        ],
+        "name": "setRoot",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "start",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "startAt",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "factor_",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "addend_",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rangeSize_",
+            "type": "uint256"
+          }
+        ],
+        "name": "updateRevealParams",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeToAndCall",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "usedProofs",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ],
+    "BCFactoryForTest": [
+      {
+        "inputs": [],
+        "name": "AllTokensHaveBeenMinted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "AlreadySet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "BurningFailed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidProof",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidRarity",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidStart",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotAFullSet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotAllSameRarity",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "NotAndERC721",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotGenesisOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "OracleMintingFinished",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "PhaseClosedOrNotOpenYet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ProofAlreadyUsed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RootAlreadySet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RootNotSet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TooManyTokens",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TooManyValues",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "previousAdmin",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "newAdmin",
+            "type": "address"
+          }
+        ],
+        "name": "AdminChanged",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "beacon",
+            "type": "address"
+          }
+        ],
+        "name": "BeaconUpgraded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "version",
+            "type": "uint8"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "partId1",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "partId2",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "partId3",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "partId4",
+            "type": "uint256"
+          }
+        ],
+        "name": "OracleMinted",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "root1",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "root2",
+            "type": "bytes32"
+          }
+        ],
+        "name": "RootSet",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          }
+        ],
+        "name": "Upgraded",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "currentPhase",
+        "outputs": [
+          {
+            "internalType": "enum BCFactory.Phase",
+            "name": "",
+            "type": "uint8"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "genesisMinted",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "genesisToken",
+        "outputs": [
+          {
+            "internalType": "contract BCGenesisToken",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32[]",
+            "name": "proof",
+            "type": "bytes32[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "sender",
+            "type": "address"
+          }
+        ],
+        "name": "hasProofBeenUsed",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "genesis_",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "oracle_",
+            "type": "address"
+          }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "merkleOneRoot",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "merkleTwoRoot",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32[]",
+            "name": "proof",
+            "type": "bytes32[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
           },
           {
             "internalType": "bool",
