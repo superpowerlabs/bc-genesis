@@ -1,5 +1,5 @@
 {
-  "when": "2023-06-14T21:02:48.433Z",
+  "when": "2023-08-07T23:42:18.374Z",
   "contracts": {
     "BCGenesisToken": [
       {
@@ -49,6 +49,11 @@
       },
       {
         "inputs": [],
+        "name": "MintingHasEnded",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "NotAContract",
         "type": "error"
       },
@@ -85,11 +90,6 @@
       {
         "inputs": [],
         "name": "NotTheOwner",
-        "type": "error"
-      },
-      {
-        "inputs": [],
-        "name": "OutOfBounds",
         "type": "error"
       },
       {
@@ -743,11 +743,6 @@
             "internalType": "address",
             "name": "to",
             "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
           }
         ],
         "name": "mint",
@@ -1256,6 +1251,11 @@
       {
         "inputs": [],
         "name": "LockerNotApproved",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintingHasEnded",
         "type": "error"
       },
       {
@@ -2451,7 +2451,17 @@
     "BCFactory": [
       {
         "inputs": [],
-        "name": "AllowListFinished",
+        "name": "AllTokensHaveBeenMinted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "AlreadySet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "BurningFailed",
         "type": "error"
       },
       {
@@ -2466,7 +2476,7 @@
       },
       {
         "inputs": [],
-        "name": "InvalidSignature",
+        "name": "InvalidStart",
         "type": "error"
       },
       {
@@ -2502,6 +2512,16 @@
       },
       {
         "inputs": [],
+        "name": "PhaseClosedOrNotOpenYet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ProofAlreadyUsed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "RootAlreadySet",
         "type": "error"
       },
@@ -2512,7 +2532,7 @@
       },
       {
         "inputs": [],
-        "name": "SignatureAlreadyUsed",
+        "name": "TooManyTokens",
         "type": "error"
       },
       {
@@ -2537,12 +2557,6 @@
           }
         ],
         "name": "AdminChanged",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [],
-        "name": "GuaranteedAllowListMintingFinished",
         "type": "event"
       },
       {
@@ -2633,7 +2647,13 @@
           {
             "indexed": false,
             "internalType": "bytes32",
-            "name": "root",
+            "name": "root1",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "root2",
             "type": "bytes32"
           }
         ],
@@ -2654,51 +2674,21 @@
         "type": "event"
       },
       {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "encoded",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "index",
-            "type": "uint256"
-          }
-        ],
-        "name": "_decode",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
-      },
-      {
         "inputs": [],
-        "name": "phaseOneFinished",
+        "name": "currentPhase",
         "outputs": [
           {
-            "internalType": "bool",
+            "internalType": "enum BCFactory.Phase",
             "name": "",
-            "type": "bool"
+            "type": "uint8"
           }
         ],
         "stateMutability": "view",
         "type": "function"
       },
       {
-        "inputs": [
-          {
-            "internalType": "uint256[]",
-            "name": "arr",
-            "type": "uint256[]"
-          }
-        ],
-        "name": "encode",
+        "inputs": [],
+        "name": "genesisMinted",
         "outputs": [
           {
             "internalType": "uint256",
@@ -2706,14 +2696,7 @@
             "type": "uint256"
           }
         ],
-        "stateMutability": "pure",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "finishAllowListMinting",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -2724,6 +2707,25 @@
             "internalType": "contract BCGenesisToken",
             "name": "",
             "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32[]",
+            "name": "proof",
+            "type": "bytes32[]"
+          }
+        ],
+        "name": "hasProofBeenUsed",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
           }
         ],
         "stateMutability": "view",
@@ -2749,7 +2751,20 @@
       },
       {
         "inputs": [],
-        "name": "merkleRoot",
+        "name": "merkleOneRoot",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "merkleTwoRoot",
         "outputs": [
           {
             "internalType": "bytes32",
@@ -2763,14 +2778,14 @@
       {
         "inputs": [
           {
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          },
-          {
             "internalType": "bytes32[]",
             "name": "proof",
             "type": "bytes32[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "isGuaranteed",
+            "type": "bool"
           }
         ],
         "name": "mintGenesis",
@@ -2833,25 +2848,6 @@
         "type": "function"
       },
       {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "genesisId",
-            "type": "uint256"
-          }
-        ],
-        "name": "part",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
@@ -2874,12 +2870,17 @@
       {
         "inputs": [
           {
-            "internalType": "uint256[]",
-            "name": "rarityIndex_",
-            "type": "uint256[]"
+            "internalType": "bytes32",
+            "name": "root1_",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "root2_",
+            "type": "bytes32"
           }
         ],
-        "name": "saveRarityIndex",
+        "name": "setRoot",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -2887,14 +2888,27 @@
       {
         "inputs": [
           {
-            "internalType": "bytes32",
-            "name": "root_",
-            "type": "bytes32"
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
           }
         ],
-        "name": "setRoot",
+        "name": "start",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "startAt",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -2962,6 +2976,25 @@
         "name": "upgradeToAndCall",
         "outputs": [],
         "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "usedProofs",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       }
     ]

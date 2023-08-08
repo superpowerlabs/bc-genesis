@@ -25,6 +25,7 @@ async function main() {
   await deployUtils.Tx(oracle.setFactory(factory.address, true), "Setting factory address");
 
   await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
+  await deployUtils.Tx(factory.start(1691456400), "Setting the start time");
 }
 
 main()
