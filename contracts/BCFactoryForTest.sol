@@ -121,7 +121,11 @@ contract BCFactoryForTest is OwnableUpgradeable, UUPSUpgradeable {
     return keccak256(abi.encodePacked(recipient));
   }
 
-  function mintGenesis(bytes32[] calldata proof, bool isGuaranteed) external {
+  function mintGenesis(
+    uint256 nonce,
+    bytes32[] calldata proof,
+    bool isGuaranteed
+  ) external {
     if (merkleOneRoot == 0) revert RootNotSet();
     Phase phase = currentPhase();
     if (phase < Phase.GuaranteedAllowList || phase > Phase.Public) revert PhaseClosedOrNotOpenYet();
