@@ -1,4 +1,11 @@
-const {expect} = require("chai");
+const chai = require("chai");
+let expectCount = 0;
+const expect = (actual) => {
+  if (expectCount > 0) {
+    console.log(`> ${expectCount++}`);
+  }
+  return chai.expect(actual);
+};
 const {
   getRoots,
   getProof,
@@ -25,6 +32,7 @@ describe("BCFactory", function () {
     Closed: 4,
   };
 
+  let proof, data, tmp, nonce;
   let owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7;
   let validator0PK = "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
 
@@ -67,16 +75,22 @@ describe("BCFactory", function () {
 
   describe("mintGenesis", function () {
     it("should fail to mint if phase not opened", async function () {
-      let proof = getProof(0, wl1.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, true), "PhaseClosedOrNotOpenYet()");
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, true), "PhaseClosedOrNotOpenYet()");
     });
 
     it("should mint parts", async function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
-      let proof = getProof(0, wl1.address);
-      await factory.connect(wl1).mintGenesis(proof, true);
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await factory.connect(wl1).mintGenesis(proof, nonce, true);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
     });
 
@@ -84,61 +98,114 @@ describe("BCFactory", function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
-      let proof = getProof(0, wl2.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, true), "InvalidProof()");
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, true), "InvalidProof()");
     });
 
     it("should fail if wrong phase", async function () {
-      proof = getProof(1, wl1.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, false), "PhaseClosedOrNotOpenYet()");
+      tmp = getProof(1, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
     });
 
     it("should fail to mint if phase not opened", async function () {
+      // let expectCount = 1;
+
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
 
-      let proof = getProof(0, wl1.address);
-      await expect(factory.connect(wl1).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl1.address, 1);
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+
+      await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl1.address, 1);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
 
-      proof = getProof(0, wl2.address);
-      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, false), "PhaseClosedOrNotOpenYet()");
-      await expect(factory.connect(wl2).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 2);
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 2);
 
-      expect(await factory.hasProofBeenUsed(proof)).to.equal(true);
+      expect(await factory.hasProofBeenUsed(proof, nonce, wl2.address)).to.equal(true);
 
-      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, true), "ProofAlreadyUsed()");
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, true), "ProofAlreadyUsed()");
 
       await increaseBlockTimestampBy(3600 * 2);
 
-      proof = getProof(0, wl3.address);
-      await expect(factory.connect(wl3).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 3);
+      tmp = getProof(0, wl3.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl3).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl3.address, 3);
 
-      proof = getProof(1, wl2.address);
-      await expect(factory.connect(wl2).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 4);
+      tmp = getProof(1, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 4);
 
-      proof = getProof(1, wl3.address);
-      await expect(factory.connect(wl3).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 5);
+      tmp = getProof(1, wl3.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl3).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl3.address, 5);
 
-      proof = getProof(1, wl4.address);
-      await expect(factory.connect(wl4).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl4.address, 6);
+      tmp = getProof(1, wl4.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl4).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl4.address, 6);
 
       await increaseBlockTimestampBy(3600 * 24);
 
-      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 7);
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 7);
 
-      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 8);
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 8);
 
-      proof = getProof(1, wl5.address);
-      await expect(factory.connect(wl5).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 9);
+      tmp = getProof(1, wl5.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl5).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 9);
       //
-      proof = getProof(0, nwl2.address);
-      await expect(factory.connect(nwl2).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, nwl2.address, 10);
+      tmp = getProof(0, nwl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(nwl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, nwl2.address, 10);
 
       await genesis.endMinting();
 
-      await assertThrowsMessage(factory.connect(wl7).mintGenesis([], false), "PhaseClosedOrNotOpenYet()");
+      await assertThrowsMessage(factory.connect(wl7).mintGenesis([], nonce, false), "PhaseClosedOrNotOpenYet()");
     });
   });
 });

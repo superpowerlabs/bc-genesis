@@ -1,4 +1,11 @@
 const chai = require("chai");
+let expectCount = 0;
+const expect = (actual) => {
+  if (expectCount > 0) {
+    console.log(`> ${expectCount++}`);
+  }
+  return chai.expect(actual);
+};
 const {
   getRoots,
   getProof,
@@ -10,21 +17,13 @@ const {
   getTimestamp,
 } = require("./helpers");
 
-let expectCount = 0;
-
-const expect = (actual) => {
-  if (expectCount > 0) {
-    console.log(`> ${expectCount++}`);
-  }
-  return chai.expect(actual);
-};
-
 describe("BCFactoryForTest", function () {
   let factory;
   let genesis;
   let oracle;
   let blockNumber;
   let encoded;
+  let proof, tmp, nonce, data;
 
   const phase = {
     NotOpened: 0,
@@ -76,16 +75,22 @@ describe("BCFactoryForTest", function () {
 
   describe("mintGenesis", function () {
     it("should fail to mint if phase not opened", async function () {
-      let proof = getProof(0, wl1.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, true), "PhaseClosedOrNotOpenYet()");
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, true), "PhaseClosedOrNotOpenYet()");
     });
 
     it("should mint parts", async function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
-      let proof = getProof(0, wl1.address);
-      await factory.connect(wl1).mintGenesis(proof, true);
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await factory.connect(wl1).mintGenesis(proof, nonce, true);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
     });
 
@@ -93,13 +98,17 @@ describe("BCFactoryForTest", function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
       await increaseBlockTimestampBy(2000);
-      let proof = getProof(0, wl2.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, true), "InvalidProof()");
+      proof = getProof(0, wl2.address).proof;
+      nonce = 12;
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, true), "InvalidProof()");
     });
 
     it("should fail if wrong phase", async function () {
-      proof = getProof(1, wl1.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, false), "PhaseClosedOrNotOpenYet()");
+      tmp = getProof(1, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
     });
 
     it("should fail to mint if phase not opened", async function () {
@@ -109,42 +118,78 @@ describe("BCFactoryForTest", function () {
       await factory.start(ts);
       await increaseBlockTimestampBy(1100);
 
-      let proof = getProof(0, wl1.address);
-      await expect(factory.connect(wl1).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl1.address, 1);
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl1.address, 1);
 
       await increaseBlockTimestampBy(1800);
 
-      proof = getProof(1, wl1.address);
-      await expect(factory.connect(wl1).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl1.address, 2);
+      tmp = getProof(1, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl1).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl1.address, 2);
 
       await increaseBlockTimestampBy(3600);
-      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 3);
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 3);
 
       await increaseBlockTimestampBy(1800);
 
-      proof = getProof(0, wl2.address);
-      await expect(factory.connect(wl2).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 4);
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 4);
 
       await increaseBlockTimestampBy(1800);
 
-      proof = getProof(1, wl2.address);
-      await expect(factory.connect(wl2).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl2.address, 5);
+      tmp = getProof(1, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 5);
 
       await increaseBlockTimestampBy(3600);
-      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 6);
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 6);
 
       await increaseBlockTimestampBy(1800);
 
-      proof = getProof(0, wl3.address);
-      await expect(factory.connect(wl3).mintGenesis(proof, true)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 7);
+      tmp = getProof(0, wl3.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl3).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl3.address, 7);
 
       await increaseBlockTimestampBy(1800);
 
-      proof = getProof(1, wl3.address);
-      await expect(factory.connect(wl3).mintGenesis(proof, false)).emit(genesis, "Transfer").withArgs(addr0, wl3.address, 8);
+      tmp = getProof(1, wl3.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl3).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl3.address, 8);
 
       await increaseBlockTimestampBy(3600);
-      await expect(factory.connect(wl5).mintGenesis([], false)).emit(genesis, "Transfer").withArgs(addr0, wl5.address, 9);
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 9);
     });
   });
 });
