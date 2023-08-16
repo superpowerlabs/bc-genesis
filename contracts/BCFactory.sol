@@ -43,6 +43,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   error InvalidStart();
   error AllTokensHaveBeenMinted();
   error AlreadySet();
+  error PreMintingLimitReached();
 
   enum Phase {
     NotOpened,
@@ -68,6 +69,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   uint256 private _factor;
   uint256 private _addend;
   uint256 private _rangeSize;
+  uint256 private _treasuryWalletAndReservedAmount;
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -92,6 +94,27 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+  function setTreasury(address treasury_, uint256 reservedAmount) external onlyOwner {
+    _treasuryWalletAndReservedAmount = (uint256(uint160(treasury_)) << 96) | reservedAmount;
+  }
+
+  function getTreasury() public view returns (address treasury_, uint256 reservedAmount) {
+    treasury_ = address(uint160(_treasuryWalletAndReservedAmount >> 96));
+    reservedAmount = uint256(uint96(_treasuryWalletAndReservedAmount));
+  }
+
+  function preMint(uint256 amount) external onlyOwner {
+    if (currentPhase() != Phase.NotOpened) revert PhaseClosedOrNotOpenYet();
+    (address treasury_, uint256 reservedAmount) = getTreasury();
+    if (genesisToken.totalSupply() >= reservedAmount) revert PreMintingLimitReached();
+    if (genesisToken.totalSupply() + amount > reservedAmount) {
+      amount = reservedAmount - genesisToken.totalSupply();
+    }
+    for (uint256 i = 0; i < amount; i++) {
+      genesisToken.mint(treasury_);
+    }
+  }
 
   function setRoot(bytes32 root1_, bytes32 root2_) external virtual onlyOwner {
     // allows to update the root, if no genesis has been minted yet
