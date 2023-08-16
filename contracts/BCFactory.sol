@@ -107,9 +107,6 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   function preMint(uint256 amount) external onlyOwner {
     if (currentPhase() != Phase.NotOpened) revert PhaseClosedOrNotOpenYet();
     (address treasury_, uint256 reservedAmount) = getTreasury();
-    //    console.log(reservedAmount);
-    //    console.log(genesisToken.totalSupply());
-    //    console.log(genesisToken.totalSupply() > reservedAmount);
     if (genesisToken.totalSupply() >= reservedAmount) revert PreMintingLimitReached();
     if (genesisToken.totalSupply() + amount > reservedAmount) {
       amount = reservedAmount - genesisToken.totalSupply();
