@@ -6,18 +6,16 @@ const DeployUtils = require("./lib/DeployUtils");
 let deployUtils;
 
 const indexes = [
-  2, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 0, 0, 0, 2, 3, 0, 1, 0,
-  1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 0, 1, 3, 0, 0, 2, 0, 0, 1, 3, 1, 0, 0, 1, 1, 0, 1, 2, 1, 0, 0, 0, 2, 2, 1,
-  0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 2, 1, 0, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1,
-  1, 1, 0, 1, 0, 0, 0, 0, 3, 0, 0, 0, 2, 4,
+  2, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+  1, 1, 0, 4, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3,
 ];
 
 async function main() {
   deployUtils = new DeployUtils(ethers);
   require("./consoleLogAlert")();
 
-  console.error("Remember to update merkle tree and indexes");
-  process.exit();
+  // console.error("Remember to update merkle tree and indexes");
+  // process.exit();
 
   const chainId = await deployUtils.currentChainId();
   let [deployer] = await ethers.getSigners();
@@ -25,8 +23,8 @@ async function main() {
   const network = chainId === 1 ? "ethereum" : chainId === 44787 ? "alfajores" : "localhost";
   console.log("Updating root in factory with:", deployer.address, "on", network);
 
-  const factory = await deployUtils.attach("BCFactory");
-  await deployUtils.Tx(factory.setRoot(process.env.ROOT), "Setting the root of the merkle tree");
+  const factory = await deployUtils.attach("BCFactoryForTest");
+  // await deployUtils.Tx(factory.setRoot(process.env.ROOT), "Setting the root of the merkle tree");
 
   let encoded = [];
   let index77;
