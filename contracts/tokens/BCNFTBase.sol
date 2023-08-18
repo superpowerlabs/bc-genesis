@@ -68,7 +68,7 @@ contract BCNFTBase is
   error LockedAsset();
   error AtLeastOneLockedAsset();
   error LockerNotApproved();
-  error TokenDoesNotExist();
+  error TokenNotFound();
 
   string private _baseTokenURI;
   bool private _baseTokenURIFrozen;
@@ -326,7 +326,7 @@ contract BCNFTBase is
     address from,
     address
   ) public view override returns (bool) {
-    if (from != address(0) && !_exists(tokenId)) revert TokenDoesNotExist();
+    if (from != address(0) && !_exists(tokenId)) revert TokenNotFound();
     if (locked(tokenId)) return false;
     return true;
   }
