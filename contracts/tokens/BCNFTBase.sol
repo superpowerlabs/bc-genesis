@@ -68,6 +68,7 @@ contract BCNFTBase is
   error LockedAsset();
   error AtLeastOneLockedAsset();
   error LockerNotApproved();
+  error TokenDoesNotExist();
 
   string private _baseTokenURI;
   bool private _baseTokenURIFrozen;
@@ -322,9 +323,10 @@ contract BCNFTBase is
 
   function isTransferable(
     uint256 tokenId,
-    address,
+    address from,
     address
   ) public view override returns (bool) {
+    if (from != address(0) && !_exists(tokenId)) revert TokenDoesNotExist();
     if (locked(tokenId)) return false;
     return true;
   }

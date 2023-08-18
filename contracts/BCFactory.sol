@@ -125,7 +125,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function start(uint256 timestamp) external onlyOwner {
-    if (timestamp < block.timestamp || timestamp > block.timestamp + 1 days) revert InvalidStart();
+    if (timestamp < block.timestamp) revert InvalidStart();
     if (startAt > 0 && block.timestamp > startAt) revert AlreadySet();
     startAt = timestamp;
   }
