@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 // Author: Francesco Sullo <francesco@superpower.io>
 
-interface IBCNFTBase {
+import "@ndujalabs/erc721attributable/contracts/IERC721Attributable.sol";
+import "./IERC721Lockable.sol";
+
+interface IBCNFTBase is IERC721Lockable, IERC721Attributable {
   event TokenURIFrozen();
   event TokenURIUpdated(string uri);
 

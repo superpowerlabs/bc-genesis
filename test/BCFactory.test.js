@@ -1,18 +1,43 @@
-const {expect} = require("chai");
-const {getRoot, getProofAndId} = require("./helpers");
+const chai = require("chai");
+let expectCount = 0;
+const expect = (actual) => {
+  if (expectCount > 0) {
+    console.log(`> ${expectCount++}`);
+  }
+  return chai.expect(actual);
+};
+const {
+  getRoots,
+  getProof,
+  addr0,
+  signPackedData,
+  assertThrowsMessage,
+  getBlockNumber,
+  increaseBlockTimestampBy,
+  getTimestamp,
+} = require("./helpers");
 
-const {signPackedData, assertThrowsMessage, getBlockNumber} = require("./helpers");
 describe("BCFactory", function () {
   let factory;
   let genesis;
   let oracle;
   let blockNumber;
+  let encoded;
 
-  let owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7;
+  const phase = {
+    NotOpened: 0,
+    GuaranteedAllowList: 1,
+    GeneralAllowList: 2,
+    Public: 3,
+    Closed: 4,
+  };
+
+  let proof, data, tmp, nonce;
+  let owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7, treasury;
   let validator0PK = "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
 
   before(async function () {
-    [owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7] = await ethers.getSigners();
+    [owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7, treasury] = await ethers.getSigners();
 
     BCGenesisToken = await ethers.getContractFactory("BCGenesisToken");
     BCOracleToken = await ethers.getContractFactory("BCOracleToken");
@@ -20,11 +45,11 @@ describe("BCFactory", function () {
   });
 
   async function initAndDeploy() {
-    genesis = await upgrades.deployProxy(BCGenesisToken, ["https://s3.Byte.City/BodyPart/"]);
+    genesis = await upgrades.deployProxy(BCGenesisToken, ["https://meta.byte.city/genesis/"]);
     await genesis.deployed();
     blockNumber = await getBlockNumber();
 
-    oracle = await upgrades.deployProxy(BCOracleToken, ["https://s3.Byte.City/Robot/"]);
+    oracle = await upgrades.deployProxy(BCOracleToken, ["https://meta.byte.city/oracles/"]);
     await oracle.deployed();
     blockNumber = await getBlockNumber();
 
@@ -34,7 +59,10 @@ describe("BCFactory", function () {
     await genesis.setFactory(factory.address, true);
     await oracle.setFactory(factory.address, true);
 
-    await expect(factory.setRoot(getRoot())).emit(factory, "RootSet").withArgs(getRoot());
+    await expect(factory.setRoot(...getRoots()))
+      .emit(factory, "RootSet")
+      .withArgs(...getRoots());
+    // console.log(encoded.map(e => e.toString()));
   }
 
   async function getSignature(hash, privateKey) {
@@ -46,112 +74,281 @@ describe("BCFactory", function () {
   });
 
   describe("mintGenesis", function () {
+    it("should fail to mint if phase not opened", async function () {
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, true), "PhaseClosedOrNotOpenYet()");
+    });
+
     it("should mint parts", async function () {
-      let [proof, id] = getProofAndId(wl1.address);
-      await factory.connect(wl1).mintGenesis(id, proof);
+      let ts = (await getTimestamp()) + 1000;
+      await factory.start(ts);
+      await increaseBlockTimestampBy(2000);
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await factory.connect(wl1).mintGenesis(proof, nonce, true);
       expect(await genesis.balanceOf(wl1.address)).to.equal(1);
     });
 
     it("should fail to mint if wrong proof", async function () {
-      let [proof, id] = getProofAndId(wl2.address);
-      await assertThrowsMessage(factory.connect(wl1).mintGenesis(id, proof), "InvalidProof()");
+      let ts = (await getTimestamp()) + 1000;
+      await factory.start(ts);
+      await increaseBlockTimestampBy(2000);
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, true), "InvalidProof()");
+    });
+
+    it("should fail if wrong phase", async function () {
+      tmp = getProof(1, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl1).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+    });
+
+    it("should fail to mint if phase not opened", async function () {
+      // let expectCount = 1;
+
+      let ts = (await getTimestamp()) + 1000;
+      await factory.start(ts);
+      await increaseBlockTimestampBy(2000);
+
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+
+      await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl1.address, 1);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 2);
+
+      expect(await factory.hasProofBeenUsed(proof, nonce, wl2.address)).to.equal(true);
+
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, true), "ProofAlreadyUsed()");
+
+      await increaseBlockTimestampBy(3600 * 2);
+
+      tmp = getProof(0, wl3.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl3).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl3.address, 3);
+
+      tmp = getProof(1, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 4);
+
+      tmp = getProof(1, wl3.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl3).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl3.address, 5);
+
+      tmp = getProof(1, wl4.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl4).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl4.address, 6);
+
+      await increaseBlockTimestampBy(3600 * 24);
+
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 7);
+
+      await expect(factory.connect(wl5).mintGenesis([], nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 8);
+
+      tmp = getProof(1, wl5.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(wl5).mintGenesis(proof, nonce, false))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl5.address, 9);
+      //
+      tmp = getProof(0, nwl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await expect(factory.connect(nwl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, nwl2.address, 10);
+
+      await genesis.endMinting();
+
+      await assertThrowsMessage(factory.connect(wl7).mintGenesis([], nonce, false), "PhaseClosedOrNotOpenYet()");
     });
   });
 
-  describe("mintOracle", function () {
-    it("should mint oracle", async function () {
-      expect(await genesis.balanceOf(wl1.address)).equal(0);
-      let [proof, id] = getProofAndId(wl1.address);
-      let id1 = id;
-      await factory.connect(wl1).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl2.address);
-      let id2 = id;
-      await factory.connect(wl2).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl2.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl3.address);
-      let id3 = id;
-      await factory.connect(wl3).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl3.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl4.address);
-      let id4 = id;
-      await factory.connect(wl4).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl4.address)).to.equal(1);
+  it("should preMint successfully the full reserve", async function () {
+    // let expectCount = 1;
 
-      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, id2);
-      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, id3);
-      await genesis.connect(wl4)["safeTransferFrom(address,address,uint256)"](wl4.address, wl1.address, id4);
+    await factory.setTreasury(treasury.address, 40);
 
-      expect(await genesis.balanceOf(wl1.address)).equal(4);
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 1)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 10);
 
-      await expect(factory.connect(wl1).mintOracle(id1, id2, id3, id4)).revertedWith("GenesisMintingNotEnded()")
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 11)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 20);
 
-      await genesis.endMinting();
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 21)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 30);
 
-      const mintedOracle = await factory.connect(wl1).mintOracle(id1, id2, id3, id4);
-      await expect(mintedOracle).to.emit(factory, "OracleMinted").withArgs(1, id1, id2, id3, id4);
-      expect(mintedOracle.hash).to.exist;
-      //check if the parts are burned
-      expect(await genesis.balanceOf(wl1.address)).equal(0);
-      expect(await oracle.balanceOf(wl1.address)).equal(1);
-    });
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 31)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 40);
 
-    it("should revert trying to use already used parts", async function () {
-      let [proof, id] = getProofAndId(wl1.address);
-      let id1 = id;
-      await factory.connect(wl1).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl2.address);
-      let id2 = id;
-      await factory.connect(wl2).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl2.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl3.address);
-      let id3 = id;
-      await factory.connect(wl3).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl3.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl4.address);
-      let id4 = id;
-      await factory.connect(wl4).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl4.address)).to.equal(1);
+    await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
 
-      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, id2);
-      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, id3);
-      await genesis.connect(wl4)["safeTransferFrom(address,address,uint256)"](wl4.address, wl1.address, id4);
+    expect(await genesis.balanceOf(treasury.address)).to.equal(40);
 
-      expect(await genesis.balanceOf(wl1.address)).equal(4);
+    let ts = (await getTimestamp()) + 1000;
+    await factory.start(ts);
 
-      await genesis.endMinting();
+    await increaseBlockTimestampBy(2000);
 
-      await factory.connect(wl1).mintOracle(id1, id2, id3, id4);
-      await assertThrowsMessage(factory.connect(wl1).mintOracle(id1, id2, id3, id4), "ERC721: invalid token ID");
-    });
+    tmp = getProof(0, wl1.address);
+    data = tmp.data;
+    proof = tmp.proof;
+    nonce = Number("0x" + data.slice(-3));
 
-    it("should revert if not owner of parts", async function () {
-      let [proof, id] = getProofAndId(wl1.address);
-      let id1 = id;
-      await factory.connect(wl1).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl2.address);
-      let id2 = id;
-      await factory.connect(wl2).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl2.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl3.address);
-      let id3 = id;
-      await factory.connect(wl3).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl3.address)).to.equal(1);
-      [proof, id] = getProofAndId(wl4.address);
-      let id4 = id;
-      await factory.connect(wl4).mintGenesis(id, proof);
-      expect(await genesis.balanceOf(wl4.address)).to.equal(1);
+    await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, wl1.address, 41);
+    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
 
-      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, id2);
-      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, id3);
+    tmp = getProof(0, wl2.address);
+    data = tmp.data;
+    proof = tmp.proof;
+    nonce = Number("0x" + data.slice(-3));
+    await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+    await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, wl2.address, 42);
+  });
 
-      expect(await genesis.balanceOf(wl1.address)).equal(3);
+  it("should preMint successfully using an excessive reserve", async function () {
+    // let expectCount = 1;
 
-      await genesis.endMinting();
+    await factory.setTreasury(treasury.address, 40);
 
-      await assertThrowsMessage(factory.connect(wl1).mintOracle(id1, id2, id3, id4), "NotGenesisOwner()");
-    });
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 1)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 10);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 11)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 20);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 21)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 30);
+
+    await expect(factory.preMint(40))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 31)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 40);
+
+    await expect(genesis.connect(treasury).transferFrom(treasury.address, wl1.address, 1))
+      .emit(genesis, "Transfer")
+      .withArgs(treasury.address, wl1.address, 1);
+
+    await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
+
+    expect(await genesis.balanceOf(treasury.address)).to.equal(39);
+    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+  });
+
+  it("should preMint till the time starts", async function () {
+    // let expectCount = 1;
+
+    await factory.setTreasury(treasury.address, 40);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 1)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 10);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 11)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 20);
+
+    let ts = (await getTimestamp()) + 1000;
+    await factory.start(ts);
+
+    await increaseBlockTimestampBy(2000);
+
+    await expect(factory.preMint(10)).revertedWith("PhaseClosedOrNotOpenYet()");
+
+    expect(await genesis.balanceOf(treasury.address)).to.equal(20);
+
+    tmp = getProof(0, wl1.address);
+    data = tmp.data;
+    proof = tmp.proof;
+    nonce = Number("0x" + data.slice(-3));
+
+    await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, wl1.address, 21);
+    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+
+    tmp = getProof(0, wl2.address);
+    data = tmp.data;
+    proof = tmp.proof;
+    nonce = Number("0x" + data.slice(-3));
+    await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+    await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, wl2.address, 22);
   });
 });

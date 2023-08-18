@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 // Author : Jerry Bassat < jerry@superpower.io>
 // (c) Superpower Labs Inc.
 
 import "../tokens/BCGenesisToken.sol";
 import "../tokens/BCOracleToken.sol";
+import "../interfaces/IAttributes.sol";
 
 //import "hardhat/console.sol";
 
@@ -23,7 +24,7 @@ contract MockFactory {
   }
 
   function mintOracle(address to) public {
-    oracleToken.mint(to);
+    oracleToken.mint(to, IAttributes.Rarity.COMMON);
   }
 
   function burnBatch(uint256[4] calldata tokenIds) public {

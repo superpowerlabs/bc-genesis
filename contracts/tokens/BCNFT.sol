@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 // Inspired by Everdragons2 NFTs, https://everdragons2.com
 // Authors: Francesco Sullo <francesco@superpower.io>
@@ -17,6 +17,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error ZeroAddress();
   error ParametersAlreadySetUp();
   error InvalidStart();
+  error MintingHasEnded();
 
   using AddressUpgradeable for address;
   uint256 internal _maxSupply;
@@ -73,7 +74,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function mintEnded() public view override returns (bool) {
-    return _mintEnded;
+    return _mintEnded || totalSupply() >= maxSupply();
   }
 
   function maxSupply() public view override returns (uint256) {
@@ -87,5 +88,4 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   function canMint() public view returns (bool) {
     return !mintEnded() && totalSupply() < maxSupply();
   }
-
 }

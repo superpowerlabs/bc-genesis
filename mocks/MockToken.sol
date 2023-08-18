@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 // Author : Jerry Bassat <jerry@superpower.io>
 // (c) Superpower Labs Inc.

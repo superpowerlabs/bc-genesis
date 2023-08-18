@@ -1,6 +1,7 @@
 const {assert} = require("chai");
 const {toChecksumAddress} = require("ethereumjs-util");
-const proofs = require("./fixtures/proofs.json");
+const proofs0 = require("./fixtures/rootLeavesAndProofs0.json");
+const proofs1 = require("./fixtures/rootLeavesAndProofs1.json");
 
 const Helpers = {
   initEthers(ethers) {
@@ -73,14 +74,27 @@ const Helpers = {
     await this.ethers.provider.send("evm_mine");
   },
 
-  getRoot() {
-    return "0x" + proofs.root;
+  getRoots() {
+    return ["0x" + proofs0.root, "0x" + proofs1.root];
   },
 
-  getProofAndId(wallet) {
+  getProof(phase, wallet) {
+    let proofs = phase === 0 ? proofs0 : proofs1;
     for (let child of proofs.children) {
+      if (child.data.startsWith(toChecksumAddress(wallet))) {
+        return child;
+      }
+    }
+  },
+
+  getProofAndIdByIndex(wallet, index) {
+    let i = 0;
+    for (let child of proofs0.children) {
       if (child.winner.wallet === toChecksumAddress(wallet)) {
-        return [child.proof, child.winner.tokenId];
+        if (i === index) {
+          return [child.proof, child.winner.tokenId];
+        }
+        i++;
       }
     }
   },

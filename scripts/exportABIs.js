@@ -12,9 +12,10 @@ async function main() {
     let json = require(source);
     ABIs.contracts[rename || name] = json.abi;
   }
-  abi("BCFactory", "");
   abi("BCGenesisToken", "tokens");
   abi("BCOracleToken", "tokens");
+  abi("BCFactory", "");
+  abi("BCFactoryForTest", "");
 
   await fs.writeFile(path.resolve(__dirname, "../export/ABIs.json"), JSON.stringify(ABIs, null, 2));
 }
