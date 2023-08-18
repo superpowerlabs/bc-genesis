@@ -296,9 +296,14 @@ describe("BCFactory", function () {
       .emit(genesis, "Transfer")
       .withArgs(addr0, treasury.address, 40);
 
+    await expect(genesis.connect(treasury).transferFrom(treasury.address, wl1.address, 1))
+      .emit(genesis, "Transfer")
+      .withArgs(treasury.address, wl1.address, 1);
+
     await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
 
-    expect(await genesis.balanceOf(treasury.address)).to.equal(40);
+    expect(await genesis.balanceOf(treasury.address)).to.equal(39);
+    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
   });
 
   it("should preMint till the time starts", async function () {

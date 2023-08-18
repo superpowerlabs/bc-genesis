@@ -204,7 +204,7 @@ contract BCNFTBase is
       revert LockerNotApproved();
     }
     _lockedBy[tokenId] = _msgSender();
-    emit Locked(tokenId);
+    emit Locked(tokenId, true);
   }
 
   function unlock(uint256 tokenId) external override onlyLocker {
@@ -213,7 +213,7 @@ contract BCNFTBase is
       revert WrongLocker();
     }
     delete _lockedBy[tokenId];
-    emit Unlocked(tokenId);
+    emit Locked(tokenId, false);
   }
 
   // emergency function in case a compromised locker is removed
