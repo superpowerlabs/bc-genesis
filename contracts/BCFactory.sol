@@ -17,7 +17,7 @@ import "./tokens/BCGenesisToken.sol";
 import "./tokens/BCOracleToken.sol";
 import "./interfaces/IAttributes.sol";
 
-//import {console} from "hardhat/console.sol";
+import {console} from "hardhat/console.sol";
 
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
@@ -80,7 +80,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     oracleToken = BCOracleToken(oracle_);
     // For initial testing, we use the following coprime.
     // They will be updated for mainnet distribution
-    updateRevealParams(13, 17, 40);
+    updateRevealParams(7, 19, 40);
   }
 
   function updateRevealParams(
@@ -241,8 +241,11 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function part(uint256 genesisId) public view returns (uint256) {
+    console.log("genesisId %s", genesisId);
     uint256 base = (genesisId - 1) / _rangeSize;
+    console.log("base %s", base);
     uint256 diff = (base * _rangeSize);
+    console.log("diff %s", diff);
     genesisId -= diff;
     uint256 factorInverse = 1;
     for (uint256 i = 1; i <= _rangeSize; i++) {
@@ -251,6 +254,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
         break;
       }
     }
+    console.log("factorInverse %s", factorInverse);
     uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - _addend) % _rangeSize) * factorInverse) % _rangeSize) + 1;
     return (((baseId - 1) % _rangeSize) / 10)**2;
   }
@@ -271,9 +275,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function rarityByIndex(uint256 index_) public view returns (uint256) {
-    uint256 elem = _rarityIndex[index_ / (_rangeSize * 77)];
-    uint256 onElem = index_ % (_rangeSize * 77);
-    uint256 remainder = onElem / _rangeSize;
-    return _decode(elem, remainder);
+    console.log("index_ %s", index_);
+    return _decode(_rarityIndex[0], index_);
   }
 }
