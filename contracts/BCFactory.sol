@@ -133,8 +133,8 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   function currentPhase() public view virtual returns (Phase) {
     if (genesisToken.mintEnded()) return Phase.Closed;
     if (startAt == 0 || block.timestamp < startAt) return Phase.NotOpened;
-    if (block.timestamp < startAt + 2 hours) return Phase.GuaranteedAllowList;
-    if (block.timestamp < startAt + 1 days) return Phase.GeneralAllowList;
+    if (block.timestamp < startAt + 4 hours) return Phase.GuaranteedAllowList;
+    if (block.timestamp < startAt + 8 hours) return Phase.GeneralAllowList;
     return Phase.Public;
   }
 
@@ -241,11 +241,8 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function part(uint256 genesisId) public view returns (uint256) {
-    console.log("genesisId %s", genesisId);
     uint256 base = (genesisId - 1) / _rangeSize;
-    console.log("base %s", base);
     uint256 diff = (base * _rangeSize);
-    console.log("diff %s", diff);
     genesisId -= diff;
     uint256 factorInverse = 1;
     for (uint256 i = 1; i <= _rangeSize; i++) {
@@ -254,7 +251,6 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
         break;
       }
     }
-    console.log("factorInverse %s", factorInverse);
     uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - _addend) % _rangeSize) * factorInverse) % _rangeSize) + 1;
     return (((baseId - 1) % _rangeSize) / 10)**2;
   }
@@ -269,13 +265,9 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     return res;
   }
 
-  function _decode(uint256 encoded, uint256 index) internal pure returns (uint256) {
-    uint256 val = encoded / (10**index);
+  function rarityByIndex(uint256 genesisTokenId_) public view returns (uint256) {
+    uint256 index = (genesisTokenId_ - 1) / _rangeSize;
+    uint256 val = _rarityIndex[0] / (10**index);
     return val % 10;
-  }
-
-  function rarityByIndex(uint256 index_) public view returns (uint256) {
-    console.log("index_ %s", index_);
-    return _decode(_rarityIndex[0], index_);
   }
 }

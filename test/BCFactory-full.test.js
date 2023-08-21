@@ -44,12 +44,12 @@ describe("BCFactory", function () {
   let owner, wl1, nwl1, nwl2, wl2, wl3, wl4, wl5, wl6, wl7, treasury;
   let validator0PK = "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
 
-  function shuffle(index) {
+  function shuffle(index, salt) {
     let rand;
     for (let i = index.length - 1; i > 0; i--) {
       // we take only the latest 4 bytes of the hash
       // to make sure the number is not too big in JavaScript
-      let hash = ethers.utils.id(i + "Some test hash").substring(58, 66);
+      let hash = ethers.utils.id(i + salt).substring(58, 66);
       let num = parseInt(hash, 16);
       rand = Math.floor(num % (i + 1));
       [index[i], index[rand]] = [index[rand], index[i]];
@@ -95,6 +95,8 @@ describe("BCFactory", function () {
   });
 
   describe.only("mintAllTheOracles", function () {
+    this.timeout(1000000);
+
     it("should mint oracle", async function () {
       let ts = (await getTimestamp()) + 1000;
       await factory.start(ts);
@@ -109,9 +111,12 @@ describe("BCFactory", function () {
       encoded.push(await factory.encode(tmp));
 
       await factory.saveRarityIndex(encoded);
-      for (let i = 0; i < indexes.length; i++) {
-        let index = indexes[i];
-        expect(await factory.rarityByIndex(i)).equal(index);
+
+      // verify rarity is returned as expected
+      for (let i = 0; i < 2400; i++) {
+        let tokenId = i + 1;
+        let rarity = (await factory.rarityByIndex(tokenId)).toNumber();
+        expect(rarity).equal(indexes[Math.floor((tokenId - 1) / 40)]);
       }
 
       const randData = {
@@ -146,72 +151,44 @@ describe("BCFactory", function () {
           legs: [],
         },
       };
+      console.log("Minting genesis tokens");
 
       for (let i = 0; i < 2400; i++) {
         let m = testFinal[i];
         let part = m.attributes[0].value.toLowerCase();
         let rarity = m.attributes[1].value.toLowerCase();
+        expect(m.tokenId).equal(i + 1);
         randData[rarity][part].push(m.tokenId);
-        await factory.connect(wl1).mintGenesis([], 0, false);
+        await expect(factory.connect(wl1).mintGenesis([], 0, false))
+          .emit(genesis, "Transfer")
+          .withArgs(addr0, wl1.address, i + 1);
       }
       for (let rarity in randData) {
         for (let part in randData[rarity]) {
-          randData[rarity][part] = shuffle(randData[rarity][part]);
+          randData[rarity][part] = shuffle(randData[rarity][part], Math.random().toString());
         }
       }
 
-      console.log("Minting Oracles");
-
+      console.log("Minting oracles");
       let k = 1;
       for (let rarity in randData) {
-        let l = randData[rarity].head.length;
-        for (let part in randData[rarity]) {
-          for (let j = 0; j < l; j++) {
-            let ids = [randData[rarity].head[j], randData[rarity].torso[j], randData[rarity].arms[j], randData[rarity].legs[j]];
-            console.log(k, ids);
-            await factory.connect(wl1).mintOracle(...ids);
-            // .emit(factory, "OracleMinted")
-            // .withArgs(k, ...ids)
-            // .emit(genesis, "Transfer")
-            // .withArgs(wl1.address, addr0, ids[0])
-            // .emit(genesis, "Transfer")
-            // .withArgs(wl1.address, addr0, ids[1])
-            // .emit(genesis, "Transfer")
-            // .withArgs(wl1.address, addr0, ids[2])
-            // .emit(genesis, "Transfer")
-            // .withArgs(wl1.address, addr0, ids[3]);
-            k++;
-          }
+        for (let j = 0; j < randData[rarity].head.length; j++) {
+          let ids = [randData[rarity].head[j], randData[rarity].torso[j], randData[rarity].arms[j], randData[rarity].legs[j]];
+          // console.log("Minting oracle", k, "using genesis", ids);
+          await expect(factory.connect(wl1).mintOracle(...ids))
+            .emit(factory, "OracleMinted")
+            .withArgs(k, ...ids)
+            .emit(genesis, "Transfer")
+            .withArgs(wl1.address, addr0, ids[0])
+            .emit(genesis, "Transfer")
+            .withArgs(wl1.address, addr0, ids[1])
+            .emit(genesis, "Transfer")
+            .withArgs(wl1.address, addr0, ids[2])
+            .emit(genesis, "Transfer")
+            .withArgs(wl1.address, addr0, ids[3]);
+          k++;
         }
       }
-
-      return;
-      // jump to public phase, to simplify testing
-      await increaseBlockTimestampBy(3600 * 25);
-
-      for (let k = 0; k < 2400; k++) {
-        await factory.connect(wl1).mintGenesis([], 0, false);
-      }
-
-      //
-      //
-      // await expect(factory.connect(wl1).mintOracle(2, 6, 11, 13))
-      //   .emit(factory, "OracleMinted")
-      //   .withArgs(1, 2, 6, 11, 13)
-      //   .emit(genesis, "Transfer")
-      //   .withArgs(wl1.address, addr0, 2)
-      //   .emit(genesis, "Transfer")
-      //   .withArgs(wl1.address, addr0, 6)
-      //   .emit(genesis, "Transfer")
-      //   .withArgs(wl1.address, addr0, 11)
-      //   .emit(genesis, "Transfer")
-      //   .withArgs(wl1.address, addr0, 13);
-      //
-      // //check if the parts are burned
-      // expect(await genesis.balanceOf(wl1.address)).equal(15);
-      // expect(await oracle.balanceOf(wl1.address)).equal(1);
-      //
-      // await expect(factory.connect(wl1).mintOracle(2, 6, 11, 13)).revertedWith("ERC721: invalid token ID");
     });
   });
 });
