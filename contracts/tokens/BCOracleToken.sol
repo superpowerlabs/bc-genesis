@@ -8,8 +8,6 @@ import "./BCNFT.sol";
 import "../interfaces/IAttributes.sol";
 
 contract BCOracleToken is BCNFT {
-  error TokenNotFound();
-
   uint256 private _nextTokenId;
 
   // version 2
@@ -17,7 +15,7 @@ contract BCOracleToken is BCNFT {
 
   function initialize(string memory tokenUri) public initializer {
     __BCNFTBase_init("BYTE City Oracle Token", "BCOT", tokenUri);
-    _maxSupply = 1000;
+    _maxSupply = 600;
     _nextTokenId = 1;
   }
 

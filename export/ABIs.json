@@ -1,5 +1,5 @@
 {
-  "when": "2023-08-08T05:14:22.168Z",
+  "when": "2023-08-18T22:43:17.207Z",
   "contracts": {
     "BCGenesisToken": [
       {
@@ -105,6 +105,11 @@
       {
         "inputs": [],
         "name": "PlayerNotAuthorized",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TokenNotFound",
         "type": "error"
       },
       {
@@ -236,6 +241,19 @@
         "inputs": [
           {
             "indexed": false,
+            "internalType": "bool",
+            "name": "locked",
+            "type": "bool"
+          }
+        ],
+        "name": "DefaultLocked",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256"
@@ -261,10 +279,16 @@
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "locked",
+            "type": "bool"
           }
         ],
         "name": "Locked",
@@ -363,19 +387,6 @@
           }
         ],
         "name": "Transfer",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": false,
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          }
-        ],
-        "name": "Unlocked",
         "type": "event"
       },
       {
@@ -491,6 +502,19 @@
             "internalType": "string",
             "name": "",
             "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "defaultLocked",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
           }
         ],
         "stateMutability": "view",
@@ -663,6 +687,35 @@
           }
         ],
         "name": "isLocker",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "isTransferable",
         "outputs": [
           {
             "internalType": "bool",
@@ -1447,6 +1500,19 @@
         "inputs": [
           {
             "indexed": false,
+            "internalType": "bool",
+            "name": "locked",
+            "type": "bool"
+          }
+        ],
+        "name": "DefaultLocked",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256"
@@ -1472,10 +1538,16 @@
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "locked",
+            "type": "bool"
           }
         ],
         "name": "Locked",
@@ -1580,19 +1652,6 @@
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          }
-        ],
-        "name": "Unlocked",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
             "indexed": true,
             "internalType": "address",
             "name": "implementation",
@@ -1689,6 +1748,19 @@
             "internalType": "string",
             "name": "",
             "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "defaultLocked",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
           }
         ],
         "stateMutability": "view",
@@ -1861,6 +1933,35 @@
           }
         ],
         "name": "isLocker",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "isTransferable",
         "outputs": [
           {
             "internalType": "bool",
@@ -2517,6 +2618,11 @@
       },
       {
         "inputs": [],
+        "name": "PreMintingLimitReached",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "ProofAlreadyUsed",
         "type": "error"
       },
@@ -2713,6 +2819,24 @@
         "type": "function"
       },
       {
+        "inputs": [],
+        "name": "getTreasury",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "treasury_",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reservedAmount",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [
           {
             "internalType": "bytes32[]",
@@ -2863,6 +2987,19 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "name": "preMint",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
@@ -2896,6 +3033,24 @@
           }
         ],
         "name": "setRoot",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "treasury_",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reservedAmount",
+            "type": "uint256"
+          }
+        ],
+        "name": "setTreasury",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -3082,6 +3237,11 @@
       },
       {
         "inputs": [],
+        "name": "PreMintingLimitReached",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "ProofAlreadyUsed",
         "type": "error"
       },
@@ -3278,6 +3438,24 @@
         "type": "function"
       },
       {
+        "inputs": [],
+        "name": "getTreasury",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "treasury_",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reservedAmount",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [
           {
             "internalType": "bytes32[]",
@@ -3428,6 +3606,19 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "name": "preMint",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
@@ -3461,6 +3652,24 @@
           }
         ],
         "name": "setRoot",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "treasury_",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reservedAmount",
+            "type": "uint256"
+          }
+        ],
+        "name": "setTreasury",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

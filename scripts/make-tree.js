@@ -6,8 +6,8 @@ const keccak256 = require("keccak256");
 const path = require("path");
 const fs = require("fs-extra");
 const {utils} = require("ethers");
-const guaranteedWL = require("../data/guaranteedWL");
-const generalWL = require("../data/generalWL");
+const guaranteedWL = require("../data/guaranteedWL.json");
+const generalWL = require("../data/generalWL.json");
 
 for (let w = 0; w < 2; w++) {
   let winners = w === 0 ? guaranteedWL : generalWL;

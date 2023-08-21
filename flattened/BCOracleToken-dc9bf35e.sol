@@ -1,84 +1,8 @@
 // Sources flattened with hardhat v2.13.0 https://hardhat.org
 
-// File @ndujalabs/erc721lockable/contracts/IERC5192.sol@v0.3.0
-
-// SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.0;
-
-// Author: Tim Daubenschütz (tim@daubenschuetz.de)
-// Repo: https://github.com/attestate/ERC5192/blob/main/src/IERC5192.sol
-
-interface IERC5192 {
-  /// @notice Emitted when the locking status is changed to locked.
-  /// @dev If a token is minted and the status is locked, this event should be emitted.
-  /// @param tokenId The identifier for a token.
-  event Locked(uint256 tokenId);
-
-  /// @notice Emitted when the locking status is changed to unlocked.
-  /// @dev If a token is minted and the status is unlocked, this event should be emitted.
-  /// @param tokenId The identifier for a token.
-  event Unlocked(uint256 tokenId);
-
-  /// @notice Returns the locking status of an Soulbound Token
-  /// @dev SBTs assigned to zero address are considered invalid, and queries
-  /// about them do throw.
-  /// @param tokenId The identifier for an SBT.
-  function locked(uint256 tokenId) external view returns (bool);
-}
-
-// File @ndujalabs/erc721lockable/contracts/IERC721Lockable.sol@v0.3.0
-
-// License: MIT
-pragma solidity ^0.8.0;
-
-// Author:
-// Francesco Sullo <francesco@sullo.co>
-
-// ERC165 interface id is 0x2e4e0d27
-interface IERC721Lockable is IERC5192 {
-  event LockerSet(address locker);
-  event LockerRemoved(address locker);
-  event ForcefullyUnlocked(uint256 tokenId);
-
-  // tells if a token is locked. Removed to extend IERC5192
-  // function locked(uint256 tokenID) external view returns (bool);
-
-  // tells the address of the contract which is locking a token
-  function lockerOf(uint256 tokenID) external view returns (address);
-
-  // tells if a contract is a locker
-  function isLocker(address _locker) external view returns (bool);
-
-  // set a locker, if the actor that is locking it is a contract, it
-  // should be approved
-  // It should emit a LockerSet event
-  function setLocker(address pool) external;
-
-  // remove a locker
-  // It should emit a LockerRemoved event
-  function removeLocker(address pool) external;
-
-  // tells if an NFT has any locks on it
-  // The function is called internally and externally
-  function hasLocks(address owner) external view returns (bool);
-
-  // locks an NFT
-  // It should emit a Locked event
-  function lock(uint256 tokenID) external;
-
-  // unlocks an NFT
-  // It should emit a Unlocked event
-  function unlock(uint256 tokenID) external;
-
-  // unlock an NFT if the locker is removed
-  // This is an emergency function called by the token owner or a DAO
-  // It should emit a ForcefullyUnlocked event
-  function unlockIfRemovedLocker(uint256 tokenID) external;
-}
-
 // File @openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol@v4.8.0
 
-// License: MIT
+// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.8.0) (utils/Address.sol)
 
 pragma solidity ^0.8.1;
@@ -2752,6 +2676,118 @@ interface IERC721Attributable {
   ) external;
 }
 
+// File contracts/interfaces/IERC6454.sol
+
+// License: MIT
+
+/// @title EIP-6454 Minimalistic Non-Transferable interface for NFTs
+/// @dev See https://eips.ethereum.org/EIPS/eip-6454
+/// @dev Note: the ERC-165 identifier for this interface is 0x91a6262f.
+/// @authors Bruno Škvorc (@Swader), Francesco Sullo (@sullof), Steven Pineda (@steven2308), Stevan Bogosavljevic (@stevyhacker), Jan Turk (@ThunderDeliverer)
+
+pragma solidity ^0.8.9;
+
+interface IERC6454 {
+  /**
+   * @notice Used to check whether the given token is transferable or not.
+   * @dev If this function returns `false`, the transfer of the token MUST revert execution.
+   * @dev If the tokenId does not exist, this method MUST revert execution, unless the token is being checked for
+   *  minting.
+   * @dev The `from` parameter MAY be used to also validate the approval of the token for transfer, but anyone
+   *  interacting with this function SHOULD NOT rely on it as it is not mandated by the proposal.
+   * @param tokenId ID of the token being checked
+   * @param from Address from which the token is being transferred
+   * @param to Address to which the token is being transferred
+   * @return Boolean value indicating whether the given token is transferable
+   */
+  function isTransferable(
+    uint256 tokenId,
+    address from,
+    address to
+  ) external view returns (bool);
+}
+
+// File contracts/interfaces/IERC6982.sol
+
+// License: CC0-1.0
+pragma solidity ^0.8.9;
+
+// ERC165 interfaceId 0x6b61a747
+interface IERC6982 {
+  // This event MUST be emitted upon deployment of the contract, establishing
+  // the default lock status for any tokens that will be minted in the future.
+  // If the default lock status changes for any reason, this event
+  // MUST be re-emitted to update the default status for all tokens.
+  // Note that emitting a new DefaultLocked event does not affect the lock
+  // status of any tokens for which a Locked event has previously been emitted.
+  event DefaultLocked(bool locked);
+
+  // This event MUST be emitted whenever the lock status of a specific token
+  // changes, effectively overriding the default lock status for this token.
+  event Locked(uint256 indexed tokenId, bool locked);
+
+  // This function returns the current default lock status for tokens.
+  // It reflects the value set by the latest DefaultLocked event.
+  function defaultLocked() external view returns (bool);
+
+  // This function returns the lock status of a specific token.
+  // If no Locked event has been emitted for a given tokenId, it MUST return
+  // the value that defaultLocked() returns, which represents the default
+  // lock status.
+  // This function MUST revert if the token does not exist.
+  function locked(uint256 tokenId) external view returns (bool);
+}
+
+// File contracts/interfaces/IERC721Lockable.sol
+
+// License: MIT
+pragma solidity ^0.8.9;
+
+// Author:
+// Francesco Sullo <francesco@sullo.co>
+
+// ERC165 interface id is 0x2e4e0d27
+interface IERC721Lockable is IERC6982, IERC6454 {
+  event LockerSet(address locker);
+  event LockerRemoved(address locker);
+  event ForcefullyUnlocked(uint256 tokenId);
+
+  // tells if a token is locked. Removed to extend IERC6982
+  // function locked(uint256 tokenID) external view returns (bool);
+
+  // tells the address of the contract which is locking a token
+  function lockerOf(uint256 tokenID) external view returns (address);
+
+  // tells if a contract is a locker
+  function isLocker(address _locker) external view returns (bool);
+
+  // set a locker, if the actor that is locking it is a contract, it
+  // should be approved
+  // It should emit a LockerSet event
+  function setLocker(address pool) external;
+
+  // remove a locker
+  // It should emit a LockerRemoved event
+  function removeLocker(address pool) external;
+
+  // tells if an NFT has any locks on it
+  // The function is called internally and externally
+  function hasLocks(address owner) external view returns (bool);
+
+  // locks an NFT
+  // It should emit a Locked event
+  function lock(uint256 tokenID) external;
+
+  // unlocks an NFT
+  // It should emit a Unlocked event
+  function unlock(uint256 tokenID) external;
+
+  // unlock an NFT if the locker is removed
+  // This is an emergency function called by the token owner or a DAO
+  // It should emit a ForcefullyUnlocked event
+  function unlockIfRemovedLocker(uint256 tokenID) external;
+}
+
 // File contracts/interfaces/IBCNFTBase.sol
 
 // License: MIT
@@ -2902,6 +2938,7 @@ contract BCNFTBase is
   error LockedAsset();
   error AtLeastOneLockedAsset();
   error LockerNotApproved();
+  error TokenNotFound();
 
   string private _baseTokenURI;
   bool private _baseTokenURIFrozen;
@@ -2936,6 +2973,7 @@ contract BCNFTBase is
     __Ownable_init();
     _baseTokenURI = tokenUri;
     __UUPSUpgradeable_init();
+    emit DefaultLocked(false);
   }
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
@@ -2946,7 +2984,7 @@ contract BCNFTBase is
     uint256 tokenId,
     uint256 batchSize
   ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-    if (locked(tokenId)) {
+    if (!isTransferable(tokenId, from, to)) {
       revert LockedAsset();
     }
     super._beforeTokenTransfer(from, to, tokenId, batchSize);
@@ -2960,6 +2998,8 @@ contract BCNFTBase is
     returns (bool)
   {
     return
+      interfaceId == type(IERC6982).interfaceId ||
+      interfaceId == type(IERC6454).interfaceId ||
       interfaceId == type(IERC721Attributable).interfaceId ||
       interfaceId == type(IERC721Lockable).interfaceId ||
       super.supportsInterface(interfaceId);
@@ -2987,15 +3027,19 @@ contract BCNFTBase is
     return string(abi.encodePacked(_baseTokenURI, "0"));
   }
 
-  // IERC721Lockable
+  // IERC6982 / IERC721Lockable
   //
   // When a contract is locked, only the locker is approved
   // The advantage of locking an NFT instead of staking is that
   // The owner keeps the ownership of it and can use that, for example,
   // to access services on Discord via Collab.land verification.
 
+  function defaultLocked() public view virtual returns (bool) {
+    return false;
+  }
+
   function locked(uint256 tokenId) public view override returns (bool) {
-    return _lockedBy[tokenId] != address(0);
+    return _lockedBy[tokenId] != address(0) || defaultLocked();
   }
 
   function lockerOf(uint256 tokenId) external view override returns (address) {
@@ -3038,7 +3082,7 @@ contract BCNFTBase is
       revert LockerNotApproved();
     }
     _lockedBy[tokenId] = _msgSender();
-    emit Locked(tokenId);
+    emit Locked(tokenId, true);
   }
 
   function unlock(uint256 tokenId) external override onlyLocker {
@@ -3047,7 +3091,7 @@ contract BCNFTBase is
       revert WrongLocker();
     }
     delete _lockedBy[tokenId];
-    emit Unlocked(tokenId);
+    emit Locked(tokenId, false);
   }
 
   // emergency function in case a compromised locker is removed
@@ -3145,6 +3189,18 @@ contract BCNFTBase is
     _resetTokenRoyalty(tokenId);
   }
 
+  // IERC6454
+
+  function isTransferable(
+    uint256 tokenId,
+    address from,
+    address
+  ) public view override returns (bool) {
+    if (from != address(0) && !_exists(tokenId)) revert TokenNotFound();
+    if (locked(tokenId)) return false;
+    return true;
+  }
+
   uint256[50] private __gap;
 }
 
@@ -3166,6 +3222,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error ZeroAddress();
   error ParametersAlreadySetUp();
   error InvalidStart();
+  error MintingHasEnded();
 
   using AddressUpgradeable for address;
   uint256 internal _maxSupply;
@@ -3222,7 +3279,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function mintEnded() public view override returns (bool) {
-    return _mintEnded;
+    return _mintEnded || totalSupply() >= maxSupply();
   }
 
   function maxSupply() public view override returns (uint256) {
@@ -3238,7 +3295,24 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 }
 
-// File contracts/tokens/BCGenesisToken.sol
+// File contracts/interfaces/IAttributes.sol
+
+// License: MIT
+pragma solidity 0.8.17;
+
+// Author: Francesco Sullo <francesco@superpower.io>
+
+interface IAttributes {
+  enum Rarity {
+    COMMON,
+    UNCOMMON,
+    RARE,
+    EPIC,
+    LEGENDARY
+  }
+}
+
+// File contracts/tokens/BCOracleToken.sol
 
 // License: MIT
 pragma solidity 0.8.17;
@@ -3246,26 +3320,33 @@ pragma solidity 0.8.17;
 // Authors: Francesco Sullo <francesco@superpower.io>
 // (c) Superpower Labs Inc.
 
-//import "hardhat/console.sol";
+contract BCOracleToken is BCNFT {
+  uint256 private _nextTokenId;
 
-contract BCGenesisToken is BCNFT {
-  error OutOfBounds();
+  // version 2
+  mapping(uint256 => IAttributes.Rarity) private _rarity;
 
   function initialize(string memory tokenUri) public initializer {
-    __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
-    _maxSupply = 10000;
+    __BCNFTBase_init("BYTE City Oracle Token", "BCOT", tokenUri);
+    _maxSupply = 600;
+    _nextTokenId = 1;
   }
 
-  function burnBatch(uint256[4] calldata tokenIds) external onlyFactory {
-    for (uint256 i = 0; i < tokenIds.length; i++) {
-      _burn(tokenIds[i]);
-    }
+  function nextTokenId() external view returns (uint256) {
+    return _nextTokenId;
   }
 
-  function mint(address to, uint256 tokenId) external virtual onlyFactory {
-    if (mintEnded() || tokenId == 0 || tokenId > maxSupply()) revert OutOfBounds();
-    _safeMint(to, tokenId);
+  function mint(address to, IAttributes.Rarity rarity) external virtual onlyFactory returns (uint256) {
+    if (mintEnded() || _nextTokenId == 0 || _nextTokenId > maxSupply()) revert CannotMint();
+    _rarity[_nextTokenId] = rarity;
+    _safeMint(to, _nextTokenId);
+    return _nextTokenId++;
+  }
+
+  function rarityOf(uint256 tokenId) external view returns (IAttributes.Rarity) {
+    if (!_exists(tokenId)) revert TokenNotFound();
+    return _rarity[tokenId];
   }
 }
 
-// Flattened on 2023-06-19T22:23:13.844Z
+// Flattened on 2023-08-18T21:31:57.854Z

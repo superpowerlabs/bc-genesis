@@ -22,9 +22,6 @@ devDependencies:
   '@ndujalabs/erc721attributable':
     specifier: ^0.1.0
     version: 0.1.0
-  '@ndujalabs/erc721lockable':
-    specifier: ^0.3.0
-    version: 0.3.0
   '@nomiclabs/hardhat-ethers':
     specifier: ^2.0.3
     version: 2.0.4(ethers@5.5.4)(hardhat@2.13.0)
@@ -591,10 +588,6 @@ packages:
 
   /@ndujalabs/erc721attributable@0.1.0:
     resolution: {integrity: sha512-81FZ/rj4OrSQWu+uPLMYMsyxTlIgOem/9A3dIpk2ZqyUdKmeK6ZJN88SxNoEjEE/Fk1Z8wBKQy6L/b6ld6+X3A==}
-    dev: true
-
-  /@ndujalabs/erc721lockable@0.3.0:
-    resolution: {integrity: sha512-wkgu4O00k3e+ISKK0KctDvL8VDh/9aBvGXaLvu+Mp3f/ZhbA0wXZYJbmqCb5/20gOwbhkgN50NxDz50OJerqog==}
     dev: true
 
   /@noble/hashes@1.1.1:

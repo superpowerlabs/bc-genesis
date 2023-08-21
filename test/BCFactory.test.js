@@ -406,20 +406,88 @@ describe("BCFactory", function () {
     });
   });
 
-  describe("encode/decode", async function () {
-    it("should verify that the rarity by index is correct", async function () {
-      this.timeout(10000);
-      encoded = [];
-      let tmp = [];
-      for (let i of indexes) {
-        tmp.push(i);
-      }
-      encoded.push(await factory.encode(tmp));
-      await factory.saveRarityIndex(encoded);
-      for (let i = 0; i < 2400; i += Math.round(13 * Math.random())) {
-        const rarity = await factory.rarityByIndex(i);
-        expect(rarity).to.equal(indexes[Math.floor(i / 40)]);
-      }
-    });
+  it("should preMint successfully using an excessive reserve", async function () {
+    // let expectCount = 1;
+
+    await factory.setTreasury(treasury.address, 40);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 1)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 10);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 11)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 20);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 21)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 30);
+
+    await expect(factory.preMint(40))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 31)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 40);
+
+    await expect(genesis.connect(treasury).transferFrom(treasury.address, wl1.address, 1))
+      .emit(genesis, "Transfer")
+      .withArgs(treasury.address, wl1.address, 1);
+
+    await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
+
+    expect(await genesis.balanceOf(treasury.address)).to.equal(39);
+    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+  });
+
+  it("should preMint till the time starts", async function () {
+    // let expectCount = 1;
+
+    await factory.setTreasury(treasury.address, 40);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 1)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 10);
+
+    await expect(factory.preMint(10))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 11)
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, treasury.address, 20);
+
+    let ts = (await getTimestamp()) + 1000;
+    await factory.start(ts);
+
+    await increaseBlockTimestampBy(2000);
+
+    await expect(factory.preMint(10)).revertedWith("PhaseClosedOrNotOpenYet()");
+
+    expect(await genesis.balanceOf(treasury.address)).to.equal(20);
+
+    tmp = getProof(0, wl1.address);
+    data = tmp.data;
+    proof = tmp.proof;
+    nonce = Number("0x" + data.slice(-3));
+
+    await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, wl1.address, 21);
+    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+
+    tmp = getProof(0, wl2.address);
+    data = tmp.data;
+    proof = tmp.proof;
+    nonce = Number("0x" + data.slice(-3));
+    await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+    await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+      .emit(genesis, "Transfer")
+      .withArgs(addr0, wl2.address, 22);
   });
 });

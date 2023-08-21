@@ -68,6 +68,7 @@ contract BCNFTBase is
   error LockedAsset();
   error AtLeastOneLockedAsset();
   error LockerNotApproved();
+  error TokenNotFound();
 
   string private _baseTokenURI;
   bool private _baseTokenURIFrozen;
@@ -102,6 +103,7 @@ contract BCNFTBase is
     __Ownable_init();
     _baseTokenURI = tokenUri;
     __UUPSUpgradeable_init();
+    emit DefaultLocked(false);
   }
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
@@ -112,7 +114,7 @@ contract BCNFTBase is
     uint256 tokenId,
     uint256 batchSize
   ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-    if (locked(tokenId)) {
+    if (!isTransferable(tokenId, from, to)) {
       revert LockedAsset();
     }
     super._beforeTokenTransfer(from, to, tokenId, batchSize);
@@ -126,6 +128,8 @@ contract BCNFTBase is
     returns (bool)
   {
     return
+      interfaceId == type(IERC6982).interfaceId ||
+      interfaceId == type(IERC6454).interfaceId ||
       interfaceId == type(IERC721Attributable).interfaceId ||
       interfaceId == type(IERC721Lockable).interfaceId ||
       super.supportsInterface(interfaceId);
@@ -153,15 +157,19 @@ contract BCNFTBase is
     return string(abi.encodePacked(_baseTokenURI, "0"));
   }
 
-  // IERC721Lockable
+  // IERC6982 / IERC721Lockable
   //
   // When a contract is locked, only the locker is approved
   // The advantage of locking an NFT instead of staking is that
   // The owner keeps the ownership of it and can use that, for example,
   // to access services on Discord via Collab.land verification.
 
+  function defaultLocked() public view virtual returns (bool) {
+    return false;
+  }
+
   function locked(uint256 tokenId) public view override returns (bool) {
-    return _lockedBy[tokenId] != address(0);
+    return _lockedBy[tokenId] != address(0) || defaultLocked();
   }
 
   function lockerOf(uint256 tokenId) external view override returns (address) {
@@ -204,7 +212,7 @@ contract BCNFTBase is
       revert LockerNotApproved();
     }
     _lockedBy[tokenId] = _msgSender();
-    emit Locked(tokenId);
+    emit Locked(tokenId, true);
   }
 
   function unlock(uint256 tokenId) external override onlyLocker {
@@ -213,7 +221,7 @@ contract BCNFTBase is
       revert WrongLocker();
     }
     delete _lockedBy[tokenId];
-    emit Unlocked(tokenId);
+    emit Locked(tokenId, false);
   }
 
   // emergency function in case a compromised locker is removed
@@ -309,6 +317,18 @@ contract BCNFTBase is
   function _burn(uint256 tokenId) internal override(ERC721Upgradeable, ERC721RoyaltyUpgradeable) {
     super._burn(tokenId);
     _resetTokenRoyalty(tokenId);
+  }
+
+  // IERC6454
+
+  function isTransferable(
+    uint256 tokenId,
+    address from,
+    address
+  ) public view override returns (bool) {
+    if (from != address(0) && !_exists(tokenId)) revert TokenNotFound();
+    if (locked(tokenId)) return false;
+    return true;
   }
 
   uint256[50] private __gap;

@@ -1,84 +1,8 @@
 // Sources flattened with hardhat v2.13.0 https://hardhat.org
 
-// File @ndujalabs/erc721lockable/contracts/IERC5192.sol@v0.3.0
-
-// SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.0;
-
-// Author: Tim Daubenschütz (tim@daubenschuetz.de)
-// Repo: https://github.com/attestate/ERC5192/blob/main/src/IERC5192.sol
-
-interface IERC5192 {
-  /// @notice Emitted when the locking status is changed to locked.
-  /// @dev If a token is minted and the status is locked, this event should be emitted.
-  /// @param tokenId The identifier for a token.
-  event Locked(uint256 tokenId);
-
-  /// @notice Emitted when the locking status is changed to unlocked.
-  /// @dev If a token is minted and the status is unlocked, this event should be emitted.
-  /// @param tokenId The identifier for a token.
-  event Unlocked(uint256 tokenId);
-
-  /// @notice Returns the locking status of an Soulbound Token
-  /// @dev SBTs assigned to zero address are considered invalid, and queries
-  /// about them do throw.
-  /// @param tokenId The identifier for an SBT.
-  function locked(uint256 tokenId) external view returns (bool);
-}
-
-// File @ndujalabs/erc721lockable/contracts/IERC721Lockable.sol@v0.3.0
-
-// License: MIT
-pragma solidity ^0.8.0;
-
-// Author:
-// Francesco Sullo <francesco@sullo.co>
-
-// ERC165 interface id is 0x2e4e0d27
-interface IERC721Lockable is IERC5192 {
-  event LockerSet(address locker);
-  event LockerRemoved(address locker);
-  event ForcefullyUnlocked(uint256 tokenId);
-
-  // tells if a token is locked. Removed to extend IERC5192
-  // function locked(uint256 tokenID) external view returns (bool);
-
-  // tells the address of the contract which is locking a token
-  function lockerOf(uint256 tokenID) external view returns (address);
-
-  // tells if a contract is a locker
-  function isLocker(address _locker) external view returns (bool);
-
-  // set a locker, if the actor that is locking it is a contract, it
-  // should be approved
-  // It should emit a LockerSet event
-  function setLocker(address pool) external;
-
-  // remove a locker
-  // It should emit a LockerRemoved event
-  function removeLocker(address pool) external;
-
-  // tells if an NFT has any locks on it
-  // The function is called internally and externally
-  function hasLocks(address owner) external view returns (bool);
-
-  // locks an NFT
-  // It should emit a Locked event
-  function lock(uint256 tokenID) external;
-
-  // unlocks an NFT
-  // It should emit a Unlocked event
-  function unlock(uint256 tokenID) external;
-
-  // unlock an NFT if the locker is removed
-  // This is an emergency function called by the token owner or a DAO
-  // It should emit a ForcefullyUnlocked event
-  function unlockIfRemovedLocker(uint256 tokenID) external;
-}
-
 // File @openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol@v4.8.0
 
-// License: MIT
+// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.8.0) (utils/Address.sol)
 
 pragma solidity ^0.8.1;
@@ -3667,6 +3591,52 @@ interface IAttributes {
   }
 }
 
+// File @openzeppelin/contracts/utils/Counters.sol@v4.8.0
+
+// License: MIT
+// OpenZeppelin Contracts v4.4.1 (utils/Counters.sol)
+
+pragma solidity ^0.8.0;
+
+/**
+ * @title Counters
+ * @author Matt Condon (@shrugs)
+ * @dev Provides counters that can only be incremented, decremented or reset. This can be used e.g. to track the number
+ * of elements in a mapping, issuing ERC721 ids, or counting request ids.
+ *
+ * Include with `using Counters for Counters.Counter;`
+ */
+library Counters {
+  struct Counter {
+    // This variable should never be directly accessed by users of the library: interactions must be restricted to
+    // the library's function. As of Solidity v0.5.2, this cannot be enforced, though there is a proposal to add
+    // this feature: see https://github.com/ethereum/solidity/issues/4637
+    uint256 _value; // default: 0
+  }
+
+  function current(Counter storage counter) internal view returns (uint256) {
+    return counter._value;
+  }
+
+  function increment(Counter storage counter) internal {
+    unchecked {
+      counter._value += 1;
+    }
+  }
+
+  function decrement(Counter storage counter) internal {
+    uint256 value = counter._value;
+    require(value > 0, "Counter: decrement overflow");
+    unchecked {
+      counter._value = value - 1;
+    }
+  }
+
+  function reset(Counter storage counter) internal {
+    counter._value = 0;
+  }
+}
+
 // File contracts/interfaces/IBCNFT.sol
 
 // License: MIT
@@ -3826,6 +3796,118 @@ interface IERC721Attributable {
   ) external;
 }
 
+// File contracts/interfaces/IERC6454.sol
+
+// License: MIT
+
+/// @title EIP-6454 Minimalistic Non-Transferable interface for NFTs
+/// @dev See https://eips.ethereum.org/EIPS/eip-6454
+/// @dev Note: the ERC-165 identifier for this interface is 0x91a6262f.
+/// @authors Bruno Škvorc (@Swader), Francesco Sullo (@sullof), Steven Pineda (@steven2308), Stevan Bogosavljevic (@stevyhacker), Jan Turk (@ThunderDeliverer)
+
+pragma solidity ^0.8.9;
+
+interface IERC6454 {
+  /**
+   * @notice Used to check whether the given token is transferable or not.
+   * @dev If this function returns `false`, the transfer of the token MUST revert execution.
+   * @dev If the tokenId does not exist, this method MUST revert execution, unless the token is being checked for
+   *  minting.
+   * @dev The `from` parameter MAY be used to also validate the approval of the token for transfer, but anyone
+   *  interacting with this function SHOULD NOT rely on it as it is not mandated by the proposal.
+   * @param tokenId ID of the token being checked
+   * @param from Address from which the token is being transferred
+   * @param to Address to which the token is being transferred
+   * @return Boolean value indicating whether the given token is transferable
+   */
+  function isTransferable(
+    uint256 tokenId,
+    address from,
+    address to
+  ) external view returns (bool);
+}
+
+// File contracts/interfaces/IERC6982.sol
+
+// License: CC0-1.0
+pragma solidity ^0.8.9;
+
+// ERC165 interfaceId 0x6b61a747
+interface IERC6982 {
+  // This event MUST be emitted upon deployment of the contract, establishing
+  // the default lock status for any tokens that will be minted in the future.
+  // If the default lock status changes for any reason, this event
+  // MUST be re-emitted to update the default status for all tokens.
+  // Note that emitting a new DefaultLocked event does not affect the lock
+  // status of any tokens for which a Locked event has previously been emitted.
+  event DefaultLocked(bool locked);
+
+  // This event MUST be emitted whenever the lock status of a specific token
+  // changes, effectively overriding the default lock status for this token.
+  event Locked(uint256 indexed tokenId, bool locked);
+
+  // This function returns the current default lock status for tokens.
+  // It reflects the value set by the latest DefaultLocked event.
+  function defaultLocked() external view returns (bool);
+
+  // This function returns the lock status of a specific token.
+  // If no Locked event has been emitted for a given tokenId, it MUST return
+  // the value that defaultLocked() returns, which represents the default
+  // lock status.
+  // This function MUST revert if the token does not exist.
+  function locked(uint256 tokenId) external view returns (bool);
+}
+
+// File contracts/interfaces/IERC721Lockable.sol
+
+// License: MIT
+pragma solidity ^0.8.9;
+
+// Author:
+// Francesco Sullo <francesco@sullo.co>
+
+// ERC165 interface id is 0x2e4e0d27
+interface IERC721Lockable is IERC6982, IERC6454 {
+  event LockerSet(address locker);
+  event LockerRemoved(address locker);
+  event ForcefullyUnlocked(uint256 tokenId);
+
+  // tells if a token is locked. Removed to extend IERC6982
+  // function locked(uint256 tokenID) external view returns (bool);
+
+  // tells the address of the contract which is locking a token
+  function lockerOf(uint256 tokenID) external view returns (address);
+
+  // tells if a contract is a locker
+  function isLocker(address _locker) external view returns (bool);
+
+  // set a locker, if the actor that is locking it is a contract, it
+  // should be approved
+  // It should emit a LockerSet event
+  function setLocker(address pool) external;
+
+  // remove a locker
+  // It should emit a LockerRemoved event
+  function removeLocker(address pool) external;
+
+  // tells if an NFT has any locks on it
+  // The function is called internally and externally
+  function hasLocks(address owner) external view returns (bool);
+
+  // locks an NFT
+  // It should emit a Locked event
+  function lock(uint256 tokenID) external;
+
+  // unlocks an NFT
+  // It should emit a Unlocked event
+  function unlock(uint256 tokenID) external;
+
+  // unlock an NFT if the locker is removed
+  // This is an emergency function called by the token owner or a DAO
+  // It should emit a ForcefullyUnlocked event
+  function unlockIfRemovedLocker(uint256 tokenID) external;
+}
+
 // File contracts/interfaces/IBCNFTBase.sol
 
 // License: MIT
@@ -3904,6 +3986,7 @@ contract BCNFTBase is
   error LockedAsset();
   error AtLeastOneLockedAsset();
   error LockerNotApproved();
+  error TokenNotFound();
 
   string private _baseTokenURI;
   bool private _baseTokenURIFrozen;
@@ -3938,6 +4021,7 @@ contract BCNFTBase is
     __Ownable_init();
     _baseTokenURI = tokenUri;
     __UUPSUpgradeable_init();
+    emit DefaultLocked(false);
   }
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
@@ -3948,7 +4032,7 @@ contract BCNFTBase is
     uint256 tokenId,
     uint256 batchSize
   ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-    if (locked(tokenId)) {
+    if (!isTransferable(tokenId, from, to)) {
       revert LockedAsset();
     }
     super._beforeTokenTransfer(from, to, tokenId, batchSize);
@@ -3962,6 +4046,8 @@ contract BCNFTBase is
     returns (bool)
   {
     return
+      interfaceId == type(IERC6982).interfaceId ||
+      interfaceId == type(IERC6454).interfaceId ||
       interfaceId == type(IERC721Attributable).interfaceId ||
       interfaceId == type(IERC721Lockable).interfaceId ||
       super.supportsInterface(interfaceId);
@@ -3989,15 +4075,19 @@ contract BCNFTBase is
     return string(abi.encodePacked(_baseTokenURI, "0"));
   }
 
-  // IERC721Lockable
+  // IERC6982 / IERC721Lockable
   //
   // When a contract is locked, only the locker is approved
   // The advantage of locking an NFT instead of staking is that
   // The owner keeps the ownership of it and can use that, for example,
   // to access services on Discord via Collab.land verification.
 
+  function defaultLocked() public view virtual returns (bool) {
+    return false;
+  }
+
   function locked(uint256 tokenId) public view override returns (bool) {
-    return _lockedBy[tokenId] != address(0);
+    return _lockedBy[tokenId] != address(0) || defaultLocked();
   }
 
   function lockerOf(uint256 tokenId) external view override returns (address) {
@@ -4040,7 +4130,7 @@ contract BCNFTBase is
       revert LockerNotApproved();
     }
     _lockedBy[tokenId] = _msgSender();
-    emit Locked(tokenId);
+    emit Locked(tokenId, true);
   }
 
   function unlock(uint256 tokenId) external override onlyLocker {
@@ -4049,7 +4139,7 @@ contract BCNFTBase is
       revert WrongLocker();
     }
     delete _lockedBy[tokenId];
-    emit Unlocked(tokenId);
+    emit Locked(tokenId, false);
   }
 
   // emergency function in case a compromised locker is removed
@@ -4147,6 +4237,18 @@ contract BCNFTBase is
     _resetTokenRoyalty(tokenId);
   }
 
+  // IERC6454
+
+  function isTransferable(
+    uint256 tokenId,
+    address from,
+    address
+  ) public view override returns (bool) {
+    if (from != address(0) && !_exists(tokenId)) revert TokenNotFound();
+    if (locked(tokenId)) return false;
+    return true;
+  }
+
   uint256[50] private __gap;
 }
 
@@ -4168,6 +4270,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   error ZeroAddress();
   error ParametersAlreadySetUp();
   error InvalidStart();
+  error MintingHasEnded();
 
   using AddressUpgradeable for address;
   uint256 internal _maxSupply;
@@ -4224,7 +4327,7 @@ abstract contract BCNFT is IBCNFT, BCNFTBase {
   }
 
   function mintEnded() public view override returns (bool) {
-    return _mintEnded;
+    return _mintEnded || totalSupply() >= maxSupply();
   }
 
   function maxSupply() public view override returns (uint256) {
@@ -4251,11 +4354,13 @@ pragma solidity 0.8.17;
 //import "hardhat/console.sol";
 
 contract BCGenesisToken is BCNFT {
-  error OutOfBounds();
+  using Counters for Counters.Counter;
+
+  Counters.Counter private _tokenIdCounter;
 
   function initialize(string memory tokenUri) public initializer {
-    __BCNFTBase_init("BYTE City Genesis Token", "BCGT", tokenUri);
-    _maxSupply = 10000;
+    __BCNFTBase_init("BYTE CITY Genesis Body Part Token", "BCGBP", tokenUri);
+    _maxSupply = 2400;
   }
 
   function burnBatch(uint256[4] calldata tokenIds) external onlyFactory {
@@ -4264,8 +4369,11 @@ contract BCGenesisToken is BCNFT {
     }
   }
 
-  function mint(address to, uint256 tokenId) external virtual onlyFactory {
-    if (mintEnded() || tokenId == 0 || tokenId > maxSupply()) revert OutOfBounds();
+  function mint(address to) external virtual onlyFactory {
+    _tokenIdCounter.increment();
+    // we start from tokenId #1
+    uint256 tokenId = _tokenIdCounter.current();
+    if (tokenId > maxSupply()) revert MintingHasEnded();
     _safeMint(to, tokenId);
   }
 }
@@ -4279,8 +4387,6 @@ pragma solidity 0.8.17;
 // (c) Superpower Labs Inc.
 
 contract BCOracleToken is BCNFT {
-  error TokenNotFound();
-
   uint256 private _nextTokenId;
 
   // version 2
@@ -4288,7 +4394,7 @@ contract BCOracleToken is BCNFT {
 
   function initialize(string memory tokenUri) public initializer {
     __BCNFTBase_init("BYTE City Oracle Token", "BCOT", tokenUri);
-    _maxSupply = 1000;
+    _maxSupply = 600;
     _nextTokenId = 1;
   }
 
@@ -4317,43 +4423,59 @@ pragma solidity 0.8.17;
 // Author : Francesco Sullo < francesco@superpower.io>
 // (c) Superpower Labs Inc.
 
-//import "hardhat/console.sol";
+//import {console} from "hardhat/console.sol";
 
 contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   using AddressUpgradeable for address;
   using SafeMathUpgradeable for uint256;
 
   event OracleMinted(uint256 indexed id, uint256 partId1, uint256 partId2, uint256 partId3, uint256 partId4);
-  event GuaranteedAllowListMintingFinished();
-  event RootSet(bytes32 root);
+  event RootSet(bytes32 root1, bytes32 root2);
 
   error NotAndERC721(address);
-  error InvalidSignature();
-  error SignatureAlreadyUsed();
+  error ProofAlreadyUsed();
   error NotGenesisOwner();
   error OracleMintingFinished();
   error RootNotSet();
   error RootAlreadySet();
   error InvalidProof();
-  error AllowListFinished();
+  error PhaseClosedOrNotOpenYet();
   error NotAllSameRarity();
   error NotAFullSet();
   error TooManyValues();
   error InvalidRarity();
+  error BurningFailed();
+  error TooManyTokens();
+  error InvalidStart();
+  error AllTokensHaveBeenMinted();
+  error AlreadySet();
+  error PreMintingLimitReached();
+
+  enum Phase {
+    NotOpened,
+    GuaranteedAllowList,
+    GeneralAllowList,
+    Public,
+    Closed
+  }
 
   BCGenesisToken public genesisToken;
   BCOracleToken public oracleToken;
 
-  bytes32 public merkleRoot;
+  bytes32 public merkleOneRoot;
+  bytes32 public merkleTwoRoot;
+  mapping(bytes32 => bool) public usedProofs;
 
   // Version 2
 
-  bool public phaseOneFinished;
+  uint256 public startAt;
+
   mapping(uint256 => uint256) internal _rarityIndex;
 
   uint256 private _factor;
   uint256 private _addend;
   uint256 private _rangeSize;
+  uint256 private _treasuryWalletAndReservedAmount;
 
   function initialize(address genesis_, address oracle_) public initializer {
     __Ownable_init();
@@ -4379,51 +4501,103 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
 
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
-  function setRoot(bytes32 root_) external onlyOwner {
+  function setTreasury(address treasury_, uint256 reservedAmount) external onlyOwner {
+    _treasuryWalletAndReservedAmount = (uint256(uint160(treasury_)) << 96) | reservedAmount;
+  }
+
+  function getTreasury() public view returns (address treasury_, uint256 reservedAmount) {
+    treasury_ = address(uint160(_treasuryWalletAndReservedAmount >> 96));
+    reservedAmount = uint256(uint96(_treasuryWalletAndReservedAmount));
+  }
+
+  function preMint(uint256 amount) external onlyOwner {
+    if (currentPhase() != Phase.NotOpened) revert PhaseClosedOrNotOpenYet();
+    (address treasury_, uint256 reservedAmount) = getTreasury();
+    if (genesisToken.totalSupply() >= reservedAmount) revert PreMintingLimitReached();
+    if (genesisToken.totalSupply() + amount > reservedAmount) {
+      amount = reservedAmount - genesisToken.totalSupply();
+    }
+    for (uint256 i = 0; i < amount; i++) {
+      genesisToken.mint(treasury_);
+    }
+  }
+
+  function setRoot(bytes32 root1_, bytes32 root2_) external virtual onlyOwner {
     // allows to update the root, if no genesis has been minted yet
     if (genesisToken.totalSupply() > 0) revert RootAlreadySet();
-    merkleRoot = root_;
-    emit RootSet(root_);
+    merkleOneRoot = root1_;
+    merkleTwoRoot = root2_;
+    emit RootSet(root1_, root2_);
   }
 
-  function finishAllowListMinting() external onlyOwner {
-    phaseOneFinished = true;
-    emit GuaranteedAllowListMintingFinished();
+  function start(uint256 timestamp) external onlyOwner {
+    if (timestamp < block.timestamp) revert InvalidStart();
+    if (startAt > 0 && block.timestamp > startAt) revert AlreadySet();
+    startAt = timestamp;
   }
 
-  function _encodeLeaf(address recipient, uint256 tokenId) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(recipient, tokenId));
+  function currentPhase() public view virtual returns (Phase) {
+    if (genesisToken.mintEnded()) return Phase.Closed;
+    if (startAt == 0 || block.timestamp < startAt) return Phase.NotOpened;
+    if (block.timestamp < startAt + 2 hours) return Phase.GuaranteedAllowList;
+    if (block.timestamp < startAt + 1 days) return Phase.GeneralAllowList;
+    return Phase.Public;
   }
 
-  function mintGenesis(uint256 tokenId, bytes32[] calldata proof) external {
-    if (merkleRoot == 0) revert RootNotSet();
-    if (phaseOneFinished) revert AllowListFinished();
-    if (!MerkleProofUpgradeable.verify(proof, merkleRoot, _encodeLeaf(_msgSender(), tokenId))) revert InvalidProof();
-    genesisToken.mint(_msgSender(), tokenId);
+  function _encodeLeaf(address recipient, uint256 nonce) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(recipient, nonce));
   }
 
-  function _isOwner(uint256 partId) internal view {
-    if (genesisToken.ownerOf(partId) != _msgSender()) revert NotGenesisOwner();
-  }
-
-  function _validateBodyParts(
-    uint256 partId1,
-    uint256 partId2,
-    uint256 partId3,
-    uint256 partId4
-  ) internal view returns (IAttributes.Rarity) {
-    _isOwner(partId1);
-    _isOwner(partId2);
-    _isOwner(partId3);
-    _isOwner(partId4);
-    uint256 rarity_ = _rarityByIndex(partId1);
-    if (rarity_ != _rarityByIndex(partId2) || rarity_ != _rarityByIndex(partId3) || rarity_ != _rarityByIndex(partId4)) {
-      revert NotAllSameRarity();
+  function mintGenesis(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    bool isGuaranteed
+  ) external {
+    if (merkleOneRoot == 0) revert RootNotSet();
+    Phase phase = currentPhase();
+    if (phase < Phase.GuaranteedAllowList || phase > Phase.Public) revert PhaseClosedOrNotOpenYet();
+    if (phase < Phase.Public) {
+      _useProof(proof, nonce, _msgSender());
+      if (isGuaranteed) {
+        _validateProof(proof, nonce, merkleOneRoot);
+      } else {
+        if (phase < Phase.GeneralAllowList) revert PhaseClosedOrNotOpenYet();
+        _validateProof(proof, nonce, merkleTwoRoot);
+      }
     }
-    if (part(partId1) + part(partId2) + part(partId3) + part(partId4) != 14) {
-      revert NotAFullSet();
-    }
-    return IAttributes.Rarity(rarity_ - 1);
+    if (genesisToken.totalSupply() >= 2400) revert AllTokensHaveBeenMinted();
+    genesisToken.mint(_msgSender());
+  }
+
+  function _validateProof(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    bytes32 root
+  ) internal view {
+    if (!MerkleProofUpgradeable.verify(proof, root, _encodeLeaf(_msgSender(), nonce))) revert InvalidProof();
+  }
+
+  function _useProof(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    address sender
+  ) internal {
+    bytes32 key = keccak256(abi.encodePacked(proof, nonce, sender));
+    if (usedProofs[key]) revert ProofAlreadyUsed();
+    usedProofs[key] = true;
+  }
+
+  function genesisMinted() external view returns (uint256) {
+    return genesisToken.totalSupply();
+  }
+
+  function hasProofBeenUsed(
+    bytes32[] calldata proof,
+    uint256 nonce,
+    address sender
+  ) external view returns (bool) {
+    bytes32 key = keccak256(abi.encodePacked(proof, nonce, sender));
+    return usedProofs[key];
   }
 
   function mintOracle(
@@ -4431,56 +4605,7 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     uint256 partId2,
     uint256 partId3,
     uint256 partId4
-  ) external {
-    if (oracleToken.totalSupply() >= 1000) revert OracleMintingFinished();
-    IAttributes.Rarity rarity = _validateBodyParts(partId1, partId2, partId3, partId4);
-    uint256 oracleId = oracleToken.mint(_msgSender(), rarity);
-    genesisToken.burnBatch([partId1, partId2, partId3, partId4]);
-    emit OracleMinted(oracleId, partId1, partId2, partId3, partId4);
-  }
-
-  function saveRarityIndex(uint256[] memory rarityIndex_) public onlyOwner {
-    for (uint256 i = 0; i < rarityIndex_.length; i++) {
-      _rarityIndex[i] = rarityIndex_[i];
-    }
-  }
-
-  function part(uint256 genesisId) public view returns (uint256) {
-    uint256 base = (genesisId - 1) / _rangeSize;
-    uint256 diff = (base * _rangeSize);
-    genesisId -= diff;
-    uint256 factorInverse = 1;
-    for (uint256 i = 1; i <= _rangeSize; i++) {
-      if ((_factor * i) % _rangeSize == 1) {
-        factorInverse = i;
-        break;
-      }
-    }
-    uint256 baseId = diff + ((((genesisId - 1 + _rangeSize - _addend) % _rangeSize) * factorInverse) % _rangeSize) + 1;
-    return (((baseId - 1) % _rangeSize) / 10)**2;
-  }
-
-  function encode(uint256[] memory arr) public pure returns (uint256) {
-    uint256 res;
-    if (arr.length > 77) revert TooManyValues();
-    for (uint256 i = 0; i < arr.length; i++) {
-      if (arr[i] > 4) revert InvalidRarity();
-      res += arr[i] * (10**i);
-    }
-    return res;
-  }
-
-  function _decode(uint256 encoded, uint256 index) public pure returns (uint256) {
-    uint256 val = encoded / (10**index);
-    return val % 10;
-  }
-
-  function _rarityByIndex(uint256 index_) internal view returns (uint256) {
-    uint256 elem = _rarityIndex[index_ / (_rangeSize * 77)];
-    uint256 onElem = index_ % (_rangeSize * 77);
-    uint256 remainder = onElem / _rangeSize;
-    return _decode(elem, remainder);
-  }
+  ) external {}
 }
 
-// Flattened on 2023-06-19T22:20:54.038Z
+// Flattened on 2023-08-18T21:33:27.365Z
