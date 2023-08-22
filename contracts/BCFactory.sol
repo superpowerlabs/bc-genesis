@@ -117,8 +117,9 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   }
 
   function setRoot(bytes32 root1_, bytes32 root2_) external virtual onlyOwner {
+    (, uint256 reservedAmount) = getTreasury();
     // allows to update the root, if no genesis has been minted yet
-    if (genesisToken.totalSupply() > 0) revert RootAlreadySet();
+    if (genesisToken.totalSupply() > reservedAmount) revert RootAlreadySet();
     merkleOneRoot = root1_;
     merkleTwoRoot = root2_;
     emit RootSet(root1_, root2_);
