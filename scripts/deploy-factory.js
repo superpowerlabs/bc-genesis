@@ -23,7 +23,7 @@ async function main() {
   await deployUtils.Tx(genesisToken.setFactory(factory.address, true), "Setting factory address");
   await deployUtils.Tx(oracle.setFactory(factory.address, true), "Setting factory address");
 
-  await deployUtils.Tx(factory.start(1692806400), "Setting the start time");
+  await deployUtils.Tx(factory.start(1692795600), "Setting the start time");
 }
 
 main()

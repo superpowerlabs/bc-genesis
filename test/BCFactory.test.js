@@ -149,7 +149,7 @@ describe("BCFactory", function () {
 
       await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, true), "ProofAlreadyUsed()");
 
-      await increaseBlockTimestampBy(3600 * 2);
+      await increaseBlockTimestampBy(3600 * 4);
 
       tmp = getProof(0, wl3.address);
       data = tmp.data;
@@ -183,7 +183,7 @@ describe("BCFactory", function () {
         .emit(genesis, "Transfer")
         .withArgs(addr0, wl4.address, 6);
 
-      await increaseBlockTimestampBy(3600 * 24);
+      await increaseBlockTimestampBy(3600 * 4);
 
       await expect(factory.connect(wl5).mintGenesis([], nonce, false))
         .emit(genesis, "Transfer")
