@@ -25,7 +25,7 @@ const indexes = [
   1, 1, 0, 4, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3,
 ];
 
-describe("BCFactory", function () {
+describe("BCFactory integration", function () {
   let factory;
   let genesis;
   let oracle;
