@@ -22,24 +22,24 @@ async function main() {
 
   const factory = await deployUtils.attach("BCFactory");
 
-  // await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
+  await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
   //
   // await deployUtils.Tx(factory.start(1692795600), "Setting the start time");
 
-  await deployUtils.Tx(factory.setTreasury("0xC7CaEc69AABc6285cB45376D4dFcf4Dbe9958e44", 120), "Setting treasury address");
-
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.setTreasury("0xC7CaEc69AABc6285cB45376D4dFcf4Dbe9958e44", 120), "Setting treasury address");
+  //
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
 }
 
 main()
