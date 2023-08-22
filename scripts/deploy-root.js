@@ -1,4 +1,5 @@
 require("dotenv").config();
+const {expect} = require("chai");
 const hre = require("hardhat");
 const ethers = hre.ethers;
 
@@ -22,24 +23,31 @@ async function main() {
 
   const factory = await deployUtils.attach("BCFactory");
 
-  // await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
+  await deployUtils.Tx(
+    factory.setRoot("0x" + tree0.root, "0x" + tree1.root, {gasLimit: 200000}),
+    "Setting the roots of the merkle trees"
+  );
+  expect(await factory.merkleOneRoot()).to.equal("0x" + tree0.root);
+  expect(await factory.merkleTwoRoot()).to.equal("0x" + tree1.root);
   //
   // await deployUtils.Tx(factory.start(1692795600), "Setting the start time");
 
-  await deployUtils.Tx(factory.setTreasury("0xC7CaEc69AABc6285cB45376D4dFcf4Dbe9958e44", 120), "Setting treasury address");
+  // await deployUtils.Tx(factory.setTreasury("0xC7CaEc69AABc6285cB45376D4dFcf4Dbe9958e44", 120), "Setting treasury address");
 
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
-  await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.updateRevealParams(7, 19, 40), "Update reveal params");
+
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
+  // await deployUtils.Tx(factory.preMint(10));
 }
 
 main()

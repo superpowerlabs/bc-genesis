@@ -270,4 +270,18 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
     uint256 val = _rarityIndex[0] / (10**index);
     return val % 10;
   }
+
+  function getParams()
+    external
+    view
+    returns (
+      uint256 factor_,
+      uint256 addend_,
+      uint256 rangeSize_
+    )
+  {
+    factor_ = _factor;
+    addend_ = _addend;
+    rangeSize_ = _rangeSize;
+  }
 }
