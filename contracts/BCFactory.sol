@@ -133,8 +133,8 @@ contract BCFactory is OwnableUpgradeable, UUPSUpgradeable {
   function currentPhase() public view virtual returns (Phase) {
     if (genesisToken.mintEnded()) return Phase.Closed;
     if (startAt == 0 || block.timestamp < startAt) return Phase.NotOpened;
-    if (block.timestamp < startAt + 2 hours) return Phase.GuaranteedAllowList;
-    if (block.timestamp < startAt + 1 days) return Phase.GeneralAllowList;
+    if (block.timestamp < startAt + 4 hours) return Phase.GuaranteedAllowList;
+    if (block.timestamp < startAt + 8 hours) return Phase.GeneralAllowList;
     return Phase.Public;
   }
 
