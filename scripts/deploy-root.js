@@ -3,8 +3,8 @@ const hre = require("hardhat");
 const ethers = hre.ethers;
 
 const DeployUtils = require("./lib/DeployUtils");
-const tree0 = require("./data/test/rootLeavesAndProofs0.json");
-const tree1 = require("./data/test/rootLeavesAndProofs1.json");
+const tree0 = require("../data/rootLeavesAndProofs0.json");
+const tree1 = require("../data/rootLeavesAndProofs1.json");
 let deployUtils;
 
 async function main() {
@@ -20,9 +20,26 @@ async function main() {
   const network = chainId === 1 ? "ethereum" : chainId === 44787 ? "alfajores" : "localhost";
   console.log("Updating root in factory with:", deployer.address, "on", network);
 
-  const factory = await deployUtils.attach("BCFactoryForTest");
+  const factory = await deployUtils.attach("BCFactory");
 
-  await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
+  // await deployUtils.Tx(factory.setRoot("0x" + tree0.root, "0x" + tree1.root), "Setting the roots of the merkle trees");
+  //
+  // await deployUtils.Tx(factory.start(1692795600), "Setting the start time");
+
+  await deployUtils.Tx(factory.setTreasury("0xC7CaEc69AABc6285cB45376D4dFcf4Dbe9958e44", 120), "Setting treasury address");
+
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
+  await deployUtils.Tx(factory.preMint(10));
 }
 
 main()
