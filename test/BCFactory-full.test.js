@@ -94,7 +94,7 @@ describe("BCFactory integration", function () {
     await initAndDeploy();
   });
 
-  describe.only("mintAllTheOracles", function () {
+  describe("mintAllTheOracles", function () {
     this.timeout(1000000);
 
     it("should mint oracle", async function () {
