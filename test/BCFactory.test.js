@@ -15,7 +15,13 @@ const {
   getBlockNumber,
   increaseBlockTimestampBy,
   getTimestamp,
+  getProofAndIdByIndex,
 } = require("./helpers");
+
+const indexes = [
+  2, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+  1, 1, 0, 4, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3,
+];
 
 describe("BCFactory", function () {
   let factory;
@@ -143,7 +149,7 @@ describe("BCFactory", function () {
 
       await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, true), "ProofAlreadyUsed()");
 
-      await increaseBlockTimestampBy(3600 * 2);
+      await increaseBlockTimestampBy(3600 * 4);
 
       tmp = getProof(0, wl3.address);
       data = tmp.data;
@@ -177,7 +183,7 @@ describe("BCFactory", function () {
         .emit(genesis, "Transfer")
         .withArgs(addr0, wl4.address, 6);
 
-      await increaseBlockTimestampBy(3600 * 24);
+      await increaseBlockTimestampBy(3600 * 4);
 
       await expect(factory.connect(wl5).mintGenesis([], nonce, false))
         .emit(genesis, "Transfer")
@@ -207,64 +213,197 @@ describe("BCFactory", function () {
 
       await assertThrowsMessage(factory.connect(wl7).mintGenesis([], nonce, false), "PhaseClosedOrNotOpenYet()");
     });
+
+    it("should preMint successfully the full reserve", async function () {
+      // let expectCount = 1;
+
+      await factory.setTreasury(treasury.address, 40);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 1)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 10);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 11)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 20);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 21)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 30);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 31)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 40);
+
+      await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
+
+      expect(await genesis.balanceOf(treasury.address)).to.equal(40);
+
+      let ts = (await getTimestamp()) + 1000;
+      await factory.start(ts);
+
+      await increaseBlockTimestampBy(2000);
+
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+
+      await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl1.address, 41);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 42);
+    });
+
+    it("should preMint successfully using an excessive reserve", async function () {
+      // let expectCount = 1;
+
+      await factory.setTreasury(treasury.address, 40);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 1)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 10);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 11)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 20);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 21)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 30);
+
+      await expect(factory.preMint(40))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 31)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 40);
+
+      await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
+
+      expect(await genesis.balanceOf(treasury.address)).to.equal(40);
+    });
+
+    it("should preMint till the time starts", async function () {
+      // let expectCount = 1;
+
+      await factory.setTreasury(treasury.address, 40);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 1)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 10);
+
+      await expect(factory.preMint(10))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 11)
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, treasury.address, 20);
+
+      let ts = (await getTimestamp()) + 1000;
+      await factory.start(ts);
+
+      await increaseBlockTimestampBy(2000);
+
+      await expect(factory.preMint(10)).revertedWith("PhaseClosedOrNotOpenYet()");
+
+      expect(await genesis.balanceOf(treasury.address)).to.equal(20);
+
+      tmp = getProof(0, wl1.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+
+      await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl1.address, 21);
+      expect(await genesis.balanceOf(wl1.address)).to.equal(1);
+
+      tmp = getProof(0, wl2.address);
+      data = tmp.data;
+      proof = tmp.proof;
+      nonce = Number("0x" + data.slice(-3));
+      await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
+      await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
+        .emit(genesis, "Transfer")
+        .withArgs(addr0, wl2.address, 22);
+    });
   });
 
-  it("should preMint successfully the full reserve", async function () {
-    // let expectCount = 1;
+  describe("mintOracle", function () {
+    it("should mint oracle", async function () {
+      let ts = (await getTimestamp()) + 1000;
+      await factory.start(ts);
 
-    await factory.setTreasury(treasury.address, 40);
+      encoded = [];
+      let tmp = [];
+      for (let i of indexes) {
+        tmp.push(i);
+      }
+      encoded.push(await factory.encode(tmp));
+      await factory.saveRarityIndex(encoded);
 
-    await expect(factory.preMint(10))
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 1)
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 10);
+      // jump to public phase, to simplify testing
+      await increaseBlockTimestampBy(3600 * 25);
 
-    await expect(factory.preMint(10))
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 11)
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 20);
+      for (let k = 0; k < 4; k++) {
+        for (let i = 1; i < 17; i++) {
+          let wl = i > 12 ? wl4 : i > 8 ? wl3 : i > 4 ? wl2 : wl1;
+          await factory.connect(wl).mintGenesis([], 0, false);
+        }
+      }
 
-    await expect(factory.preMint(10))
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 21)
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 30);
+      await genesis.connect(wl2)["safeTransferFrom(address,address,uint256)"](wl2.address, wl1.address, 6);
+      await genesis.connect(wl3)["safeTransferFrom(address,address,uint256)"](wl3.address, wl1.address, 11);
+      await genesis.connect(wl4)["safeTransferFrom(address,address,uint256)"](wl4.address, wl1.address, 13);
 
-    await expect(factory.preMint(10))
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 31)
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, treasury.address, 40);
+      expect(await genesis.balanceOf(wl1.address)).equal(19);
 
-    await expect(factory.preMint(10)).revertedWith("PreMintingLimitReached()");
+      await expect(factory.connect(wl1).mintOracle(1, 6, 11, 53)).revertedWith("NotGenesisOwner()");
+      await expect(factory.connect(wl1).mintOracle(1, 6, 11, 13)).revertedWith("NotAFullSet()");
+      await expect(factory.connect(wl1).mintOracle(1, 6, 11, 49)).revertedWith("NotAllSameRarity()");
 
-    expect(await genesis.balanceOf(treasury.address)).to.equal(40);
+      await expect(factory.connect(wl1).mintOracle(2, 6, 11, 13))
+        .emit(factory, "OracleMinted")
+        .withArgs(1, 2, 6, 11, 13)
+        .emit(genesis, "Transfer")
+        .withArgs(wl1.address, addr0, 2)
+        .emit(genesis, "Transfer")
+        .withArgs(wl1.address, addr0, 6)
+        .emit(genesis, "Transfer")
+        .withArgs(wl1.address, addr0, 11)
+        .emit(genesis, "Transfer")
+        .withArgs(wl1.address, addr0, 13);
 
-    let ts = (await getTimestamp()) + 1000;
-    await factory.start(ts);
+      //check if the parts are burned
+      expect(await genesis.balanceOf(wl1.address)).equal(15);
+      expect(await oracle.balanceOf(wl1.address)).equal(1);
 
-    await increaseBlockTimestampBy(2000);
-
-    tmp = getProof(0, wl1.address);
-    data = tmp.data;
-    proof = tmp.proof;
-    nonce = Number("0x" + data.slice(-3));
-
-    await expect(factory.connect(wl1).mintGenesis(proof, nonce, true))
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, wl1.address, 41);
-    expect(await genesis.balanceOf(wl1.address)).to.equal(1);
-
-    tmp = getProof(0, wl2.address);
-    data = tmp.data;
-    proof = tmp.proof;
-    nonce = Number("0x" + data.slice(-3));
-    await assertThrowsMessage(factory.connect(wl2).mintGenesis(proof, nonce, false), "PhaseClosedOrNotOpenYet()");
-    await expect(factory.connect(wl2).mintGenesis(proof, nonce, true))
-      .emit(genesis, "Transfer")
-      .withArgs(addr0, wl2.address, 42);
+      await expect(factory.connect(wl1).mintOracle(2, 6, 11, 13)).revertedWith("ERC721: invalid token ID");
+    });
   });
 
   it("should preMint successfully using an excessive reserve", async function () {
